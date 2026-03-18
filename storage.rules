@@ -1,0 +1,33 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ─── User Profile Photos ────────────────────────────────────────────────
+    match /users/{userId}/profile.jpg {
+      // Authenticated owner can read/write their own photo
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId
+        && request.resource.size < 5 * 1024 * 1024   // 5MB max
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // ─── Driver Documents ───────────────────────────────────────────────────
+    match /drivers/{driverId}/{document=**} {
+      // Driver can upload their own documents
+      allow write: if request.auth != null
+        && request.auth.uid == driverId
+        && request.resource.size < 10 * 1024 * 1024  // 10MB max
+        && (
+          request.resource.contentType.matches('image/.*') ||
+          request.resource.contentType == 'application/pdf'
+        );
+
+      // Driver can read their own documents; admin can read all
+      allow read: if request.auth != null && (
+        request.auth.uid == driverId ||
+        // Admin check via custom claim (optional) — falls back to allowing authenticated reads
+        request.auth.token.role == 'admin'
+      );
+    }
+  }
+}

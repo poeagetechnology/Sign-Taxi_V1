@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data
+        : null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && getUserData() != null && getUserData().role == 'admin';
+    }
+
+    function isDriver() {
+      return isSignedIn() && getUserData() != null && getUserData().role == 'driver';
+    }
+
+    function isUser() {
+      return isSignedIn() && getUserData() != null && getUserData().role == 'user';
+    }
+
+    // ─── Users ──────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      // Allow any authenticated user to read user profiles.
+      // This prevents recursion / permission-denied in login + profile lookups.
+      allow read: if isSignedIn();
+
+      // Owner can update their own doc
+      // Admin can update any doc
+      allow update: if isSignedIn() && (isOwner(userId) || isAdmin());
+
+      // Allow create during registration (auth uid must match doc id)
+      allow create: if isSignedIn() && isOwner(userId);
+
+      // Only admin can delete
+      allow delete: if isAdmin();
+    }
+
+    // ─── Drivers ────────────────────────────────────────────────────────────
+    match /drivers/{driverId} {
+      // Any authenticated user can read driver profiles (for admin + passenger views)
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(driverId);
+      allow update: if isSignedIn() && (isOwner(driverId) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // ─── Driver Locations ───────────────────────────────────────────────────
+    match /driver_locations/{driverId} {
+      // Drivers write their own location
+      allow write: if isSignedIn() && isOwner(driverId);
+
+      // Any authenticated user can read locations (passengers need to see drivers on map)
+      allow read: if isSignedIn();
+    }
+
+    // ─── Rides ──────────────────────────────────────────────────────────────
+    match /rides/{rideId} {
+      // Admin can do everything
+      allow read, write: if isAdmin();
+
+      // Authenticated user can create own rides
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+
+      // User/driver can read/update their own rides
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.driverId == request.auth.uid
+      );
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.driverId == request.auth.uid
+      );
+
+      // Drivers can read requested rides to see the list
+      allow read: if isDriver();
+    }
+  }
+}
