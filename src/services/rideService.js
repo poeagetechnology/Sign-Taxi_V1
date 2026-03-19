@@ -24,7 +24,7 @@ export const createRide = async (data) => {
     dropLng: data.dropLng,
     dropAddress: data.dropAddress,
     fare: data.fare,
-    status: 'requested',
+    status: 'searching', // Start in 'searching' status for dispatch system
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   }

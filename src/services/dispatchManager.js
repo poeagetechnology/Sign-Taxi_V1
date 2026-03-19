@@ -46,10 +46,12 @@ export class DispatchManager {
     }
 
     const currentDriver = this.dispatchQueue[this.currentIndex]
+    console.log(`[Dispatch] Sending to driver ${currentDriver.driverId} (${this.currentIndex + 1}/${this.dispatchQueue.length})`)
 
     try {
       // Send request to driver
       await sendDispatchToDriver(this.rideId, currentDriver.driverId)
+      console.log(`[Dispatch] ✅ Request sent to ${currentDriver.driverId}`)
 
       // Update ride status
       await updateDoc(doc(db, 'rides', this.rideId), {
@@ -58,6 +60,7 @@ export class DispatchManager {
         dispatchAttempt: this.currentIndex + 1,
         updatedAt: serverTimestamp(),
       })
+      console.log(`[Dispatch] ✅ Ride updated with currentDriverId=${currentDriver.driverId}`)
 
       this.onStatusChange?.({
         status: 'searching',
