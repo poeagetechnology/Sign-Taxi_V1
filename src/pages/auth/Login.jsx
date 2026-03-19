@@ -105,13 +105,6 @@ const Login = () => {
             </Link>
           </p>
         </div>
-
-        {/* Demo hint */}
-        <div className="mt-4 p-4 bg-amber-50 border border-amber-100 rounded-xl">
-          <p className="text-xs text-amber-700 font-medium mb-1">Demo accounts</p>
-          <p className="text-xs text-amber-600">admin@signtaxi.com / driver@signtaxi.com / user@signtaxi.com</p>
-          <p className="text-xs text-amber-500 mt-0.5">Password: <span className="font-mono">demo1234</span></p>
-        </div>
       </div>
     </div>
   )
