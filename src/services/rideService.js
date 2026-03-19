@@ -117,12 +117,19 @@ export const subscribeToUserActiveRide = (userId, callback) => {
   const q = query(
     collection(db, 'rides'),
     where('userId', '==', userId),
-    where('status', 'in', ['requested', 'accepted', 'started'])
+    orderBy('createdAt', 'desc')
   )
   return onSnapshot(q, (snapshot) => {
     if (!snapshot.empty) {
-      const ride = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() }
-      callback(ride)
+      const activeRide = snapshot.docs.find(doc => {
+        const status = doc.data().status
+        return ['requested', 'accepted', 'started'].includes(status)
+      })
+      if (activeRide) {
+        callback({ id: activeRide.id, ...activeRide.data() })
+      } else {
+        callback(null)
+      }
     } else {
       callback(null)
     }

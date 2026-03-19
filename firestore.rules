@@ -72,18 +72,55 @@ service cloud.firestore {
       // Authenticated user can create own rides
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
 
-      // User/driver can read/update their own rides
-      allow read: if isSignedIn() && (
-        resource.data.userId == request.auth.uid ||
-        resource.data.driverId == request.auth.uid
-      );
-      allow update: if isSignedIn() && (
-        resource.data.userId == request.auth.uid ||
-        resource.data.driverId == request.auth.uid
+      // User can read/update their own rides
+      allow read, update: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Driver can read rides:
+      // 1. Where they are assigned (driverId matches)
+      // 2. Where ride is searching and driver is in dispatch queue
+      allow read: if isDriver() && (
+        resource.data.driverId == request.auth.uid ||
+        (resource.data.status == 'searching' && 
+         resource.data.dispatchQueue.exists() &&
+         resource.data.dispatchQueue.size() > 0)
       );
 
-      // Drivers can read requested rides to see the list
-      allow read: if isDriver();
+      // Driver can update rides:
+      // 1. They are assigned to
+      // 2. For dispatch status updates
+      allow update: if isDriver() && (
+        resource.data.driverId == request.auth.uid ||
+        resource.data.status in ['searching', 'requested']
+      );
+    }
+
+    // ─── Dispatch Requests ──────────────────────────────────────────────────
+    // Track individual dispatch attempts to drivers
+    match /dispatch_requests/{requestId} {
+      // Admin can read all
+      allow read: if isAdmin();
+
+      // Drivers can read their own requests
+      allow read: if isDriver() && resource.data.driverId == request.auth.uid;
+
+      // System (authenticated users) can create dispatch requests
+      allow create: if isSignedIn();
+
+      // Drivers can update their response (accept/reject)
+      allow update: if isDriver() && resource.data.driverId == request.auth.uid &&
+        request.resource.data.response in ['accepted', 'rejected'];
+    }
+
+    // ─── Driver Ratings ────────────────────────────────────────────────────
+    match /driver_ratings/{ratingId} {
+      // Anyone can read ratings
+      allow read: if isSignedIn();
+
+      // Users can create ratings for completed rides
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+
+      // Users can update their own ratings
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
   }
 }

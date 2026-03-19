@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Navigation, DollarSign, Clock, ArrowRight } from 'lucide-react'
+import { MapPin, Navigation, DollarSign, Clock, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import AppLayout from '../../components/layout/AppLayout'
 import MapView from '../../components/maps/MapView'
@@ -8,10 +8,13 @@ import UserMarker from '../../components/maps/UserMarker'
 import DriverMarker from '../../components/maps/DriverMarker'
 import Directions from '../../components/maps/Directions'
 import Button from '../../components/common/Button'
+import Spinner from '../../components/common/Spinner'
 import { useCurrentLocation } from '../../hooks/useLocation'
 import { useOnlineDrivers } from '../../hooks/useDrivers'
 import useAuthStore from '../../store/authStore'
 import { createRide } from '../../services/rideService'
+import { initializeDispatch } from '../../services/dispatchManager'
+import { subscribeToDispatchStatus } from '../../services/dispatchService'
 import { reverseGeocode } from '../../services/locationService'
 import { calculateFareFromDistance } from '../../utils/fareCalculator'
 import { formatCurrency } from '../../utils/formatters'
@@ -33,6 +36,10 @@ const BookRide = () => {
   const [routeInfo, setRouteInfo] = useState(null)
   const [fare, setFare] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [dispatchState, setDispatchState] = useState({
+    status: 'idle', // idle, searching, requested, accepted, error
+    error: null,
+  })
 
   const handleMapClick = useCallback(async (e) => {
     const lat = e.latLng.lat()
@@ -114,9 +121,54 @@ const BookRide = () => {
         dropAddress,
         fare: finalFare,
       })
-      toast.success('Ride requested! Looking for a driver…')
-      navigate(`/user/track/${ride.id}`)
+
+      // Initialize dispatch system
+      setDispatchState({ status: 'searching', error: null })
+      toast.success('Ride requested! Searching for drivers…')
+      
+      const { dispatcher } = await initializeDispatch(
+        ride.id,
+        pickup.lat,
+        pickup.lng,
+        3 // 3km radius
+      )
+
+      // Start dispatching with status callback
+      dispatcher.startDispatching((update) => {
+        setDispatchState(prev => ({
+          ...prev,
+          status: update.status,
+          error: update.error || null
+        }))
+
+        // If driver accepted, navigate after a brief delay
+        if (update.status === 'assigned') {
+          setTimeout(() => {
+            navigate(`/user/track/${ride.id}`)
+          }, 1000) // Give user time to see the "Driver accepted" message
+        }
+      })
+
+      // Also subscribe to real-time ride updates
+      const unsubscribe = subscribeToDispatchStatus(ride.id, (update) => {
+        if (update.status === 'accepted') {
+          setDispatchState(prev => ({
+            ...prev,
+            status: 'accepted',
+            error: null
+          }))
+        }
+      })
+
+      // Set timeout for overall dispatch - if no driver assigned in 60s, show error
+      const timeoutId = setTimeout(() => {
+        unsubscribe?.()
+        setDispatchState({ status: 'error', error: 'No drivers available. Please try again.' })
+        toast.error('Timeout: No drivers were available for this ride.')
+      }, 60000)
     } catch (err) {
+      console.error('Booking error:', err)
+      setDispatchState({ status: 'error', error: err.message })
       toast.error(err.message || 'Failed to book ride')
     } finally {
       setLoading(false)
@@ -228,6 +280,55 @@ const BookRide = () => {
                 <p className="text-xl font-display font-bold text-slate-900">{routeInfo.duration}</p>
                 <p className="text-xs text-slate-500 mt-0.5">Duration</p>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Dispatch status indicator */}
+        {dispatchState.status !== 'idle' && (
+          <div className={`rounded-2xl p-4 border ${
+            dispatchState.status === 'searching' ? 'bg-blue-50 border-blue-200' :
+            dispatchState.status === 'requested' ? 'bg-amber-50 border-amber-200' :
+            dispatchState.status === 'accepted' ? 'bg-emerald-50 border-emerald-200' :
+            dispatchState.status === 'error' ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex items-center gap-3">
+              {dispatchState.status === 'searching' && (
+                <>
+                  <Spinner size="sm" />
+                  <div>
+                    <p className="text-sm font-semibold text-blue-700">Searching for drivers…</p>
+                    <p className="text-xs text-blue-600 mt-0.5">Please wait while we find the best driver for you</p>
+                  </div>
+                </>
+              )}
+              {dispatchState.status === 'requested' && (
+                <>
+                  <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center animate-pulse" />
+                  <div>
+                    <p className="text-sm font-semibold text-amber-700">Request sent to driver</p>
+                    <p className="text-xs text-amber-600 mt-0.5">Waiting for acceptance…</p>
+                  </div>
+                </>
+              )}
+              {dispatchState.status === 'accepted' && (
+                <>
+                  <CheckCircle size={20} className="text-emerald-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-700">Driver accepted!</p>
+                    <p className="text-xs text-emerald-600 mt-0.5">Driver is heading to pickup</p>
+                  </div>
+                </>
+              )}
+              {dispatchState.status === 'error' && (
+                <>
+                  <AlertCircle size={20} className="text-red-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-red-700">{dispatchState.error || 'No drivers available'}</p>
+                    <p className="text-xs text-red-600 mt-0.5">Try booking again</p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}

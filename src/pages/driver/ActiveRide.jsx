@@ -31,16 +31,22 @@ const DriverActiveRide = () => {
     if (!userData?.id) return
     const q = query(
       collection(db, 'rides'),
-      where('driverId', '==', userData.id),
-      where('status', 'in', ['accepted', 'started'])
+      where('driverId', '==', userData.id)
     )
     const unsub = onSnapshot(q, (snap) => {
       if (!snap.empty) {
-        const doc = snap.docs[0]
-        const rideData = { id: doc.id, ...doc.data() }
-        setRide(rideData)
-        if (rideData.userId) {
-          getUserById(rideData.userId).then(setPassengerInfo).catch(() => {})
+        const activeRide = snap.docs.find(doc => {
+          const status = doc.data().status
+          return ['accepted', 'started'].includes(status)
+        })
+        if (activeRide) {
+          const rideData = { id: activeRide.id, ...activeRide.data() }
+          setRide(rideData)
+          if (rideData.userId) {
+            getUserById(rideData.userId).then(setPassengerInfo).catch(() => {})
+          }
+        } else {
+          setRide(null)
         }
       } else {
         setRide(null)
