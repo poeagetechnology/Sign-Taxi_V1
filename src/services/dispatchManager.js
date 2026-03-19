@@ -54,6 +54,7 @@ export class DispatchManager {
       // Update ride status
       await updateDoc(doc(db, 'rides', this.rideId), {
         status: 'searching',
+        currentDriverId: currentDriver.driverId, // Ensure currentDriverId is set
         dispatchAttempt: this.currentIndex + 1,
         updatedAt: serverTimestamp(),
       })

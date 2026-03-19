@@ -69,6 +69,7 @@ export const sendDispatchToDriver = async (rideId, driverId) => {
   try {
     // Update ride document with dispatch info
     await updateDoc(doc(db, 'rides', rideId), {
+      currentDriverId: driverId, // Top-level field for Firestore queries
       dispatchLog: {
         currentDriver: driverId,
         sentAt: serverTimestamp(),
@@ -161,7 +162,7 @@ export const subscribeToDriverRequests = (driverId, callback) => {
     query(
       collection(db, 'rides'),
       where('status', '==', 'searching'),
-      where('dispatchLog.currentDriver', '==', driverId)
+      where('currentDriverId', '==', driverId)
     ),
     snapshot => {
       const requests = snapshot.docs.map(doc => ({

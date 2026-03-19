@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { initializeDispatch } from '../services/dispatchManager'
 import { updateBookingStatus, cancelBooking } from '../services/bookingStateManager'
-import { subscribeToDispatchStatus } from '../services/dispatchService'
+import { subscribeToDispatchStatus, subscribeToDriverRequests, updateDispatchStatus } from '../services/dispatchService'
 
 /**
  * HIGH-LEVEL DISPATCH HOOK
@@ -130,23 +130,13 @@ export const useDriverDispatchRequests = (driverId) => {
     if (!driverId) return
 
     // Subscribe to dispatch requests for this driver
-    // Will be implemented using subscribeToDriverRequests
-    const setupListener = async () => {
-      try {
-        const { subscribeToDriverRequests } = await import(
-          '../services/dispatchService'
-        )
-        unsubscribeRef.current = subscribeToDriverRequests(driverId, (requests) => {
-          if (requests.length > 0) {
-            setIncomingRequest(requests[0]) // Take first request
-          }
-        })
-      } catch (err) {
-        console.error('Error setting up driver listener:', err)
+    unsubscribeRef.current = subscribeToDriverRequests(driverId, (requests) => {
+      if (requests.length > 0) {
+        setIncomingRequest(requests[0]) // Take first request
+      } else {
+        setIncomingRequest(null)
       }
-    }
-
-    setupListener()
+    })
 
     return () => {
       unsubscribeRef.current?.()
@@ -165,17 +155,10 @@ export const useDriverDispatchRequests = (driverId) => {
             driverId,
             acceptedAt: new Date(),
           })
-
-          dispatcherRef.current?.confirmAcceptance(driverId)
           setIncomingRequest(null)
         } else {
           // Reject: dispatcher will auto-move to next driver
-          const { updateDispatchStatus } = await import(
-            '../services/dispatchService'
-          )
           await updateDispatchStatus(rideId, driverId, 'rejected')
-
-          dispatcherRef.current?.rejectByDriver(driverId)
           setIncomingRequest(null)
         }
       } catch (err) {

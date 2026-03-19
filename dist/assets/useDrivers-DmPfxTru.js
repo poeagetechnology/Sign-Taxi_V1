@@ -1,0 +1,1 @@
+import{r as i}from"./index-DF5RIymi.js";import{s as n}from"./locationService-DyE6xOP-.js";import{u as t}from"./driverStore-Crk2I1pI.js";const m=()=>{const{onlineDriverLocations:e,setOnlineDriverLocations:r}=t();return i.useEffect(()=>{const s=n(o=>{r(o)});return()=>s()},[r]),e};export{m as u};
