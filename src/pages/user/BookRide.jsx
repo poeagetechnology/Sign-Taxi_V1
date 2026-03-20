@@ -1,34 +1,32 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Navigation, DollarSign, Clock, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react'
+import { ArrowRight, CheckCircle, MapPin, Navigation, AlertCircle, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 import AppLayout from '../../components/layout/AppLayout'
-import MapView from '../../components/maps/MapView'
-import UserMarker from '../../components/maps/UserMarker'
-import DriverMarker from '../../components/maps/DriverMarker'
-import Directions from '../../components/maps/Directions'
+import LocationPickerModal from '../../components/maps/LocationPickerModal'
 import Button from '../../components/common/Button'
 import Spinner from '../../components/common/Spinner'
+import Input from '../../components/common/Input'
 import { useCurrentLocation } from '../../hooks/useLocation'
-import { useOnlineDrivers } from '../../hooks/useDrivers'
 import useAuthStore from '../../store/authStore'
 import { createRide } from '../../services/rideService'
 import { initializeDispatch } from '../../services/dispatchManager'
 import { subscribeToDispatchStatus } from '../../services/dispatchService'
-import { reverseGeocode } from '../../services/locationService'
 import { calculateFareFromDistance } from '../../utils/fareCalculator'
 import { formatCurrency } from '../../utils/formatters'
+import { DEFAULT_MAP_CENTER } from '../../utils/constants'
 
-const STEP = { PICKUP: 'pickup', DROP: 'drop', CONFIRM: 'confirm' }
+const LOCATION_FIELD = {
+  PICKUP: 'pickup',
+  DROP: 'drop',
+}
 
 const BookRide = () => {
   const navigate = useNavigate()
   const { userData } = useAuthStore()
-  const { location: currentLocation } = useCurrentLocation()
-  const onlineDrivers = useOnlineDrivers()
-  const mapRef = useRef(null)
+  const { location: currentLocation, loading: loadingCurrentLocation } = useCurrentLocation()
+  const cleanupRef = useRef({ unsubscribe: null, timeoutId: null })
 
-  const [step, setStep] = useState(STEP.PICKUP)
   const [pickup, setPickup] = useState(null)
   const [pickupAddress, setPickupAddress] = useState('')
   const [drop, setDrop] = useState(null)
@@ -36,80 +34,101 @@ const BookRide = () => {
   const [routeInfo, setRouteInfo] = useState(null)
   const [fare, setFare] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [pickerField, setPickerField] = useState(LOCATION_FIELD.PICKUP)
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [dispatchState, setDispatchState] = useState({
-    status: 'idle', // idle, searching, requested, accepted, error
+    status: 'idle',
     error: null,
   })
 
-  const handleMapClick = useCallback(async (e) => {
-    const lat = e.latLng.lat()
-    const lng = e.latLng.lng()
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-    const address = await reverseGeocode(lat, lng, apiKey)
-
-    if (step === STEP.PICKUP) {
-      setPickup({ lat, lng })
-      setPickupAddress(address)
-    } else if (step === STEP.DROP) {
-      setDrop({ lat, lng })
-      setDropAddress(address)
+  useEffect(() => {
+    return () => {
+      cleanupRef.current.unsubscribe?.()
+      if (cleanupRef.current.timeoutId) {
+        clearTimeout(cleanupRef.current.timeoutId)
+      }
     }
-  }, [step])
-
-  const handleRouteResult = useCallback((info) => {
-    setRouteInfo(info)
-    const calculatedFare = calculateFareFromDistance(info.distance)
-    setFare(calculatedFare)
   }, [])
 
-  const getStraightLineDistanceMeters = (a, b) => {
-    if (!a || !b) return 0
-    const toRad = (v) => (v * Math.PI) / 180
-    const R = 6371000
-    const dLat = toRad(b.lat - a.lat)
-    const dLng = toRad(b.lng - a.lng)
-    const aa =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2)
-    const c = 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa))
-    return R * c
+  useEffect(() => {
+    setRouteInfo(null)
+    setFare(null)
+  }, [pickup?.lat, pickup?.lng, drop?.lat, drop?.lng])
+
+  const handleRouteResult = (info) => {
+    setRouteInfo(info)
+    setFare(calculateFareFromDistance(info.distance))
+  }
+
+  const getStraightLineDistanceMeters = (from, to) => {
+    if (!from || !to) return 0
+
+    const toRadians = (value) => (value * Math.PI) / 180
+    const earthRadiusMeters = 6371000
+    const deltaLat = toRadians(to.lat - from.lat)
+    const deltaLng = toRadians(to.lng - from.lng)
+    const haversine =
+      Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+      Math.cos(toRadians(from.lat)) * Math.cos(toRadians(to.lat)) *
+      Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2)
+
+    return earthRadiusMeters * (2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine)))
+  }
+
+  const handlePickerConfirm = ({ location, address }) => {
+    if (pickerField === LOCATION_FIELD.PICKUP) {
+      setPickup(location)
+      setPickupAddress(address)
+      return
+    }
+
+    setDrop(location)
+    setDropAddress(address)
+  }
+
+  const openPicker = (field) => {
+    setPickerField(field)
+    setPickerOpen(true)
   }
 
   const handleUseCurrentLocation = () => {
-    if (!currentLocation) { toast.error('Location not available'); return }
-    setPickup(currentLocation)
-    setPickupAddress('Your current location')
-  }
-
-  const handleNext = () => {
-    if (step === STEP.PICKUP) {
-      if (!pickup) { toast.error('Please select a pickup location on the map'); return }
-      setStep(STEP.DROP)
-    } else if (step === STEP.DROP) {
-      if (!drop) { toast.error('Please select a drop location on the map'); return }
-      setStep(STEP.CONFIRM)
+    if (!currentLocation) {
+      toast.error('Current location is not available yet.')
+      return
     }
+
+    setPickup(currentLocation)
+    setPickupAddress('Current location')
   }
 
   const handleBook = async () => {
     if (!pickup || !drop) {
-      toast.error('Please set both pickup and drop locations')
+      toast.error('Please set both pickup and destination locations.')
       return
     }
 
-    if (!routeInfo) {
+    let nextRouteInfo = routeInfo
+    let nextFare = fare
+
+    if (!nextRouteInfo) {
       const straightDistance = getStraightLineDistanceMeters(pickup, drop)
-      const straightFare = calculateFareFromDistance(straightDistance)
-      const straightDistanceText = `${(straightDistance / 1000).toFixed(2)} km`
-      setRouteInfo({ distance: straightDistance, duration: 'N/A', distanceText: straightDistanceText })
-      setFare(straightFare)
-      toast('Unable to get route details from Maps API; using straight-line estimate.', { icon: '⚠️' })
+      nextRouteInfo = {
+        distance: straightDistance,
+        duration: 'N/A',
+        distanceText: `${(straightDistance / 1000).toFixed(2)} km`,
+      }
+      nextFare = calculateFareFromDistance(straightDistance)
+      setRouteInfo(nextRouteInfo)
+      setFare(nextFare)
+      toast('Unable to calculate a route right now. Using straight-line distance instead.', { icon: '⚠️' })
     }
 
-    const finalFare = fare || (routeInfo ? calculateFareFromDistance(routeInfo.distance) : calculateFareFromDistance(getStraightLineDistanceMeters(pickup, drop)))
-
     setLoading(true)
+    cleanupRef.current.unsubscribe?.()
+    if (cleanupRef.current.timeoutId) {
+      clearTimeout(cleanupRef.current.timeoutId)
+    }
+
     try {
       const ride = await createRide({
         userId: userData.id,
@@ -119,45 +138,36 @@ const BookRide = () => {
         dropLat: drop.lat,
         dropLng: drop.lng,
         dropAddress,
-        fare: finalFare,
+        fare: nextFare,
       })
 
-      // Initialize dispatch system
       setDispatchState({ status: 'searching', error: null })
-      toast.success('Ride requested! Searching for drivers…')
-      
-      const { dispatcher } = await initializeDispatch(
-        ride.id,
-        pickup.lat,
-        pickup.lng,
-        3 // 3km radius
-      )
+      toast.success('Ride requested. Searching for drivers…')
 
-      // Start dispatching with status callback
+      const { dispatcher } = await initializeDispatch(ride.id, pickup.lat, pickup.lng, 3)
+
       dispatcher.startDispatching((update) => {
-        setDispatchState(prev => ({
+        setDispatchState((prev) => ({
           ...prev,
           status: update.status,
-          error: update.error || null
+          error: update.error || null,
         }))
 
-        // If driver accepted, navigate after a brief delay
         if (update.status === 'accepted') {
           setTimeout(() => {
             navigate(`/user/track/${ride.id}`)
-          }, 1000) // Give user time to see the "Driver accepted" message
+          }, 1000)
         }
       })
 
-      // Also subscribe to real-time ride updates as backup
-      const unsubscribe = subscribeToDispatchStatus(ride.id, (update) => {
+      cleanupRef.current.unsubscribe = subscribeToDispatchStatus(ride.id, (update) => {
         if (update.status === 'accepted') {
-          setDispatchState(prev => ({
+          setDispatchState((prev) => ({
             ...prev,
             status: 'accepted',
-            error: null
+            error: null,
           }))
-          // Additional backup navigation trigger
+
           setTimeout(() => {
             if (document.location.pathname.includes('/user/book')) {
               navigate(`/user/track/${ride.id}`)
@@ -166,130 +176,132 @@ const BookRide = () => {
         }
       })
 
-      // Set timeout for overall dispatch - if no driver assigned in 60s, show error
-      const timeoutId = setTimeout(() => {
-        unsubscribe?.()
+      cleanupRef.current.timeoutId = setTimeout(() => {
+        cleanupRef.current.unsubscribe?.()
         setDispatchState({ status: 'error', error: 'No drivers available. Please try again.' })
         toast.error('Timeout: No drivers were available for this ride.')
       }, 60000)
-    } catch (err) {
-      setDispatchState({ status: 'error', error: err.message })
-      toast.error(err.message || 'Failed to book ride')
+    } catch (error) {
+      setDispatchState({ status: 'error', error: error.message })
+      toast.error(error.message || 'Failed to book ride')
     } finally {
       setLoading(false)
     }
   }
 
-  const stepLabels = {
-    [STEP.PICKUP]: 'Select Pickup',
-    [STEP.DROP]: 'Select Destination',
-    [STEP.CONFIRM]: 'Confirm Ride',
-  }
+  const canBook = Boolean(pickup && drop) && !loading
+  const activeLocation = pickerField === LOCATION_FIELD.PICKUP ? pickup : drop
+  const activeAddress = pickerField === LOCATION_FIELD.PICKUP ? pickupAddress : dropAddress
 
   return (
     <AppLayout title="Book Ride">
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div>
           <h1 className="font-display text-2xl font-bold text-slate-900">Book a Ride</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{stepLabels[step]} — tap on the map</p>
+          <p className="text-slate-500 text-sm mt-1">
+            Search addresses, confirm the exact pin on the map, and we will fill the trip automatically.
+          </p>
         </div>
 
-        {/* Step indicator */}
-        <div className="flex items-center gap-2">
-          {[STEP.PICKUP, STEP.DROP, STEP.CONFIRM].map((s, i) => (
-            <React.Fragment key={s}>
-              <div className={`flex items-center gap-1.5 text-xs font-semibold ${step === s ? 'text-amber-600' : Object.values(STEP).indexOf(s) < Object.values(STEP).indexOf(step) ? 'text-emerald-600' : 'text-slate-300'}`}>
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === s ? 'bg-amber-500 text-white' : Object.values(STEP).indexOf(s) < Object.values(STEP).indexOf(step) ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400'}`}>
-                  {i + 1}
-                </div>
-                <span className="hidden sm:block">{['Pickup', 'Drop', 'Confirm'][i]}</span>
-              </div>
-              {i < 2 && <div className={`flex-1 h-px ${Object.values(STEP).indexOf(step) > i ? 'bg-emerald-300' : 'bg-slate-200'}`} />}
-            </React.Fragment>
-          ))}
-        </div>
-
-        {/* Map */}
-        <div className="h-72 md:h-96 rounded-2xl overflow-hidden shadow-card relative">
-          <MapView
-            center={pickup || currentLocation}
-            onMapClick={step !== STEP.CONFIRM ? handleMapClick : undefined}
-            onMapLoad={m => { mapRef.current = m }}
-            className="h-full"
-          >
-            {currentLocation && !pickup && <UserMarker position={currentLocation} label="You" />}
-            {pickup && <UserMarker position={pickup} label="Pickup" />}
-            {drop && <UserMarker position={drop} label="Drop" />}
-            {pickup && drop && (
-              <Directions origin={pickup} destination={drop} onResult={handleRouteResult} />
-            )}
-            {onlineDrivers.map(d => d.lat && d.lng && (
-              <DriverMarker key={d.id} position={{ lat: d.lat, lng: d.lng }} />
-            ))}
-          </MapView>
-
-          {step !== STEP.CONFIRM && (
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur px-4 py-2 rounded-full shadow-md text-sm font-medium text-slate-700 border border-slate-100">
-              {step === STEP.PICKUP ? '📍 Tap to set pickup' : '🏁 Tap to set destination'}
-            </div>
-          )}
-        </div>
-
-        {/* Location info */}
-        <div className="bg-white rounded-2xl shadow-card p-4 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center mt-0.5 shrink-0">
-              <MapPin size={15} className="text-blue-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-slate-400 font-medium">PICKUP</p>
-              <p className="text-sm text-slate-700 mt-0.5">{pickupAddress || 'Not selected'}</p>
-            </div>
-            {step === STEP.PICKUP && !pickup && currentLocation && (
-              <button onClick={handleUseCurrentLocation} className="text-xs text-amber-600 font-semibold whitespace-nowrap hover:underline">
-                Use current
-              </button>
-            )}
-          </div>
-
-          {(step === STEP.DROP || step === STEP.CONFIRM) && (
-            <>
-              <div className="border-l-2 border-dashed border-slate-200 ml-4 h-4" />
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center mt-0.5 shrink-0">
-                  <Navigation size={15} className="text-amber-500" />
-                </div>
+        <div className="space-y-5">
+          <div className="space-y-4">
+            <div className="card space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
-                  <p className="text-xs text-slate-400 font-medium">DESTINATION</p>
-                  <p className="text-sm text-slate-700 mt-0.5">{dropAddress || 'Not selected'}</p>
+                  <h2 className="font-display font-semibold text-slate-900">Trip details</h2>
+                  <p className="text-xs text-slate-500 mt-1">Each field opens a searchable map popup with a draggable pin and coordinate input.</p>
                 </div>
+                <Button variant="secondary" onClick={handleUseCurrentLocation} disabled={!currentLocation}>
+                  <MapPin size={16} /> Use current pickup
+                </Button>
               </div>
-            </>
-          )}
-        </div>
 
-        {/* Fare estimate */}
-        {step === STEP.CONFIRM && fare && routeInfo && (
-          <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
-            <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-3">Ride Summary</p>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <p className="text-xl font-display font-bold text-amber-600">{formatCurrency(fare)}</p>
-                <p className="text-xs text-slate-500 mt-0.5">Estimated Fare</p>
-              </div>
-              <div className="text-center">
-                <p className="text-xl font-display font-bold text-slate-900">{routeInfo.distanceText}</p>
-                <p className="text-xs text-slate-500 mt-0.5">Distance</p>
-              </div>
-              <div className="text-center">
-                <p className="text-xl font-display font-bold text-slate-900">{routeInfo.duration}</p>
-                <p className="text-xs text-slate-500 mt-0.5">Duration</p>
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-slate-200 p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                      <MapPin size={18} className="text-blue-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <Input
+                        label="From Location"
+                        value={pickupAddress}
+                        readOnly
+                        placeholder="Search and confirm pickup location"
+                        onClick={() => openPicker(LOCATION_FIELD.PICKUP)}
+                      />
+                      <p className="text-xs text-slate-400 mt-2">
+                        {pickup ? `${pickup.lat.toFixed(6)}, ${pickup.lng.toFixed(6)}` : 'No pickup selected yet'}
+                      </p>
+                    </div>
+                  </div>
+                  <Button variant="secondary" fullWidth onClick={() => openPicker(LOCATION_FIELD.PICKUP)}>
+                    <Search size={16} /> Search or pick pickup on map
+                  </Button>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                      <Navigation size={18} className="text-amber-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <Input
+                        label="To Location"
+                        value={dropAddress}
+                        readOnly
+                        placeholder="Search and confirm destination"
+                        onClick={() => openPicker(LOCATION_FIELD.DROP)}
+                      />
+                      <p className="text-xs text-slate-400 mt-2">
+                        {drop ? `${drop.lat.toFixed(6)}, ${drop.lng.toFixed(6)}` : 'No destination selected yet'}
+                      </p>
+                    </div>
+                  </div>
+                  <Button variant="secondary" fullWidth onClick={() => openPicker(LOCATION_FIELD.DROP)}>
+                    <Search size={16} /> Search or pick destination on map
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
-        )}
 
-        {/* Dispatch status indicator */}
+          <div className="card space-y-4">
+            <div>
+              <h2 className="font-display font-semibold text-slate-900">Fare summary</h2>
+              <p className="text-xs text-slate-500 mt-1">Route details appear automatically after both locations are confirmed.</p>
+            </div>
+
+            {pickup && drop && routeInfo && fare ? (
+              <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-xl font-display font-bold text-amber-600">{formatCurrency(fare)}</p>
+                    <p className="text-xs text-slate-500 mt-1">Estimated fare</p>
+                  </div>
+                  <div>
+                    <p className="text-xl font-display font-bold text-slate-900">{routeInfo.distanceText}</p>
+                    <p className="text-xs text-slate-500 mt-1">Distance</p>
+                  </div>
+                  <div>
+                    <p className="text-xl font-display font-bold text-slate-900">{routeInfo.duration}</p>
+                    <p className="text-xs text-slate-500 mt-1">Duration</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-500">
+                Confirm both From and To locations to generate the route preview and fare estimate.
+              </div>
+            )}
+
+            <Button fullWidth onClick={handleBook} loading={loading} disabled={!canBook}>
+              Confirm Booking {fare ? `· ${formatCurrency(fare)}` : ''}
+              {!loading && <ArrowRight size={16} />}
+            </Button>
+          </div>
+        </div>
+
         {dispatchState.status !== 'idle' && (
           <div className={`rounded-2xl p-4 border ${
             dispatchState.status === 'searching' ? 'bg-blue-50 border-blue-200' :
@@ -303,7 +315,7 @@ const BookRide = () => {
                   <Spinner size="sm" />
                   <div>
                     <p className="text-sm font-semibold text-blue-700">Searching for drivers…</p>
-                    <p className="text-xs text-blue-600 mt-0.5">Please wait while we find the best driver for you</p>
+                    <p className="text-xs text-blue-600 mt-0.5">Please wait while we find the nearest available driver.</p>
                   </div>
                 </>
               )}
@@ -320,8 +332,8 @@ const BookRide = () => {
                 <>
                   <CheckCircle size={20} className="text-emerald-600" />
                   <div>
-                    <p className="text-sm font-semibold text-emerald-700">Driver accepted!</p>
-                    <p className="text-xs text-emerald-600 mt-0.5">Driver is heading to pickup</p>
+                    <p className="text-sm font-semibold text-emerald-700">Driver accepted</p>
+                    <p className="text-xs text-emerald-600 mt-0.5">Redirecting to live tracking…</p>
                   </div>
                 </>
               )}
@@ -330,7 +342,7 @@ const BookRide = () => {
                   <AlertCircle size={20} className="text-red-600" />
                   <div>
                     <p className="text-sm font-semibold text-red-700">{dispatchState.error || 'No drivers available'}</p>
-                    <p className="text-xs text-red-600 mt-0.5">Try booking again</p>
+                    <p className="text-xs text-red-600 mt-0.5">Try adjusting the location or booking again.</p>
                   </div>
                 </>
               )}
@@ -338,23 +350,16 @@ const BookRide = () => {
           </div>
         )}
 
-        {/* Action buttons */}
-        <div className="flex gap-3">
-          {step !== STEP.PICKUP && (
-            <Button variant="secondary" onClick={() => setStep(prev => prev === STEP.CONFIRM ? STEP.DROP : STEP.PICKUP)}>
-              Back
-            </Button>
-          )}
-          {step !== STEP.CONFIRM ? (
-            <Button fullWidth onClick={handleNext}>
-              Next <ArrowRight size={16} />
-            </Button>
-          ) : (
-            <Button fullWidth loading={loading} onClick={handleBook}>
-              Confirm Booking · {formatCurrency(fare || 0)}
-            </Button>
-          )}
-        </div>
+        <LocationPickerModal
+          isOpen={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          onConfirm={handlePickerConfirm}
+          title={pickerField === LOCATION_FIELD.PICKUP ? 'Select pickup location' : 'Select destination'}
+          confirmLabel={pickerField === LOCATION_FIELD.PICKUP ? 'Confirm pickup' : 'Confirm destination'}
+          currentLocation={currentLocation}
+          initialLocation={activeLocation}
+          initialAddress={activeAddress}
+        />
       </div>
     </AppLayout>
   )

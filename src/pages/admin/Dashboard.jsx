@@ -68,7 +68,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard icon={Users} label="Total Users" value={stats.users} color="bg-blue-500" />
           <StatCard icon={Car} label="Total Drivers" value={stats.drivers} color="bg-violet-500" />
           <StatCard icon={ClipboardList} label="Total Rides" value={stats.rides} color="bg-amber-500" />
@@ -81,7 +81,34 @@ const AdminDashboard = () => {
             <h2 className="font-display font-semibold text-slate-900">Recent Rides</h2>
             <span className="badge-gray">{recentRides.length} rides</span>
           </div>
-          <div className="overflow-x-auto">
+          
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3 p-4">
+            {recentRides.map(ride => (
+              <div key={ride.id} className="border border-slate-200 rounded-xl p-3 space-y-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-400 truncate">{ride.pickupAddress || '—'}</p>
+                    <p className="text-sm font-medium text-slate-900 mt-1 truncate flex items-center gap-1">
+                      <span>→</span>
+                      <span className="truncate">{ride.dropAddress || '—'}</span>
+                    </p>
+                  </div>
+                  <RideStatusBadge status={ride.status} />
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                  <span className="font-semibold text-slate-900">{formatCurrency(ride.fare || 0)}</span>
+                  <span className="text-slate-400">{formatDateTime(ride.createdAt)}</span>
+                </div>
+              </div>
+            ))}
+            {recentRides.length === 0 && (
+              <div className="text-center py-8 text-slate-400 text-sm">No rides yet</div>
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr>

@@ -42,7 +42,7 @@ const DriverHistory = () => {
         </div>
 
         {/* Earnings summary */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { label: 'Total Rides', value: rides.length },
             { label: 'Completed', value: completed.length },

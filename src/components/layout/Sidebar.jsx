@@ -1,7 +1,7 @@
 import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, Users, Car, ClipboardList,
+  LayoutDashboard, Users, Car, ClipboardList, History,
   LogOut, Zap, ChevronRight
 } from 'lucide-react'
 import useAuthStore from '../../store/authStore'
@@ -13,6 +13,7 @@ const adminLinks = [
   { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/drivers', label: 'Drivers', icon: Car },
   { to: '/admin/rides', label: 'Rides', icon: ClipboardList },
+  { to: '/admin/history', label: 'History', icon: History },
 ]
 
 const userLinks = [

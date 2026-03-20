@@ -102,6 +102,11 @@ const DriverActiveRide = () => {
     finally { setActionLoading(false) }
   }
 
+  const openGoogleMaps = (lat, lng) => {
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+    window.open(mapsUrl, '_blank')
+  }
+
   if (loading) {
     return (
     <AppLayout title="Active Ride">
@@ -183,20 +188,38 @@ const DriverActiveRide = () => {
             <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
               <MapPin size={15} className="text-blue-500" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-xs text-slate-400 font-medium">PICKUP</p>
               <p className="text-sm text-slate-700">{ride.pickupAddress}</p>
             </div>
+            {ride.status === 'accepted' && (
+              <button
+                onClick={() => openGoogleMaps(ride.pickupLat, ride.pickupLng)}
+                className="shrink-0 w-8 h-8 bg-blue-100 hover:bg-blue-200 rounded-lg flex items-center justify-center transition-colors"
+                title="Open in Google Maps"
+              >
+                <MapPin size={16} className="text-blue-600" />
+              </button>
+            )}
           </div>
           <div className="border-l-2 border-dashed border-slate-200 ml-4 h-3" />
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center shrink-0">
               <Navigation size={15} className="text-amber-500" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-xs text-slate-400 font-medium">DESTINATION</p>
               <p className="text-sm text-slate-700">{ride.dropAddress}</p>
             </div>
+            {ride.status === 'started' && (
+              <button
+                onClick={() => openGoogleMaps(ride.dropLat, ride.dropLng)}
+                className="shrink-0 w-8 h-8 bg-amber-100 hover:bg-amber-200 rounded-lg flex items-center justify-center transition-colors"
+                title="Open in Google Maps"
+              >
+                <Navigation size={16} className="text-amber-600" />
+              </button>
+            )}
           </div>
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
             <p className="text-sm text-slate-500">Fare</p>
@@ -205,16 +228,34 @@ const DriverActiveRide = () => {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {ride.status === 'accepted' && (
-            <Button fullWidth variant="success" loading={actionLoading} onClick={handleStart}>
-              <Play size={16} /> Start Ride
-            </Button>
+            <>
+              <Button
+                fullWidth
+                variant="secondary"
+                onClick={() => openGoogleMaps(ride.pickupLat, ride.pickupLng)}
+              >
+                <MapPin size={16} /> Open Pickup Map
+              </Button>
+              <Button fullWidth variant="success" loading={actionLoading} onClick={handleStart}>
+                <Play size={16} /> Start Ride
+              </Button>
+            </>
           )}
           {ride.status === 'started' && (
-            <Button fullWidth loading={actionLoading} onClick={handleComplete}>
-              <CheckCircle size={16} /> Complete Ride
-            </Button>
+            <>
+              <Button
+                fullWidth
+                variant="secondary"
+                onClick={() => openGoogleMaps(ride.dropLat, ride.dropLng)}
+              >
+                <Navigation size={16} /> Open Drop Map
+              </Button>
+              <Button fullWidth variant="success" loading={actionLoading} onClick={handleComplete}>
+                <CheckCircle size={16} /> Complete Ride
+              </Button>
+            </>
           )}
         </div>
       </div>

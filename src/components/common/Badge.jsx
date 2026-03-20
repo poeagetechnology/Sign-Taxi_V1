@@ -6,6 +6,7 @@ export const RideStatusBadge = ({ status }) => {
   const label = RIDE_STATUS_LABELS[status] || status
 
   const dots = {
+    searching: 'bg-sky-400',
     requested: 'bg-amber-400',
     accepted: 'bg-blue-400',
     started: 'bg-blue-400',

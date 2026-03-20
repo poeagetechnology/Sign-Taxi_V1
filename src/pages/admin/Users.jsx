@@ -64,10 +64,10 @@ const AdminUsers = () => {
             <h1 className="font-display text-2xl font-bold text-slate-900">Users</h1>
             <p className="text-slate-500 text-sm mt-0.5">{users.length} registered passengers</p>
           </div>
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
-              className="input-field pl-9 w-64"
+              className="input-field pl-9 w-full sm:w-64"
               placeholder="Search users…"
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -81,51 +81,86 @@ const AdminUsers = () => {
           ) : filtered.length === 0 ? (
             <EmptyState icon={Users} title="No users found" description="No passengers match your search." />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th className="table-header text-left">User</th>
-                    <th className="table-header text-left">Phone</th>
-                    <th className="table-header text-left">Status</th>
-                    <th className="table-header text-left">Joined</th>
-                    <th className="table-header text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(user => (
-                    <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="table-cell">
-                        <div className="flex items-center gap-3">
-                          <Avatar name={user.name} photoURL={user.photoURL} size="sm" />
-                          <div>
-                            <p className="font-medium text-slate-900 text-sm">{user.name}</p>
-                            <p className="text-xs text-slate-400">{user.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="table-cell text-slate-500">{user.phone || '—'}</td>
-                      <td className="table-cell">
-                        <Badge variant={user.status === 'active' ? 'success' : 'error'}>
+            <>
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3 p-4">
+                {filtered.map(user => (
+                  <div key={user.id} className="border border-slate-200 rounded-xl p-4 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <Avatar name={user.name} photoURL={user.photoURL} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-slate-900">{user.name}</p>
+                        <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                        <p className="text-xs text-slate-500 mt-1">{user.phone || 'No phone'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={user.status === 'active' ? 'success' : 'error'} className="text-xs">
                           {user.status === 'active' ? '● Active' : '● Blocked'}
                         </Badge>
-                      </td>
-                      <td className="table-cell text-xs text-slate-400">{formatDate(user.createdAt)}</td>
-                      <td className="table-cell">
-                        <Button
-                          variant={user.status === 'active' ? 'danger' : 'success'}
-                          size="sm"
-                          loading={actionId === user.id}
-                          onClick={() => handleBlock(user)}
-                        >
-                          {user.status === 'active' ? <><UserX size={14} /> Block</> : <><UserCheck size={14} /> Unblock</>}
-                        </Button>
-                      </td>
+                        <p className="text-xs text-slate-400">{formatDate(user.createdAt)}</p>
+                      </div>
+                      <Button
+                        variant={user.status === 'active' ? 'danger' : 'success'}
+                        size="sm"
+                        loading={actionId === user.id}
+                        onClick={() => handleBlock(user)}
+                      >
+                        {user.status === 'active' ? <UserX size={14} /> : <UserCheck size={14} />}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr>
+                      <th className="table-header text-left">User</th>
+                      <th className="table-header text-left">Phone</th>
+                      <th className="table-header text-left">Status</th>
+                      <th className="table-header text-left">Joined</th>
+                      <th className="table-header text-left">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filtered.map(user => (
+                      <tr key={user.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="table-cell">
+                          <div className="flex items-center gap-3">
+                            <Avatar name={user.name} photoURL={user.photoURL} size="sm" />
+                            <div>
+                              <p className="font-medium text-slate-900 text-sm">{user.name}</p>
+                              <p className="text-xs text-slate-400">{user.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="table-cell text-slate-500">{user.phone || '—'}</td>
+                        <td className="table-cell">
+                          <Badge variant={user.status === 'active' ? 'success' : 'error'}>
+                            {user.status === 'active' ? '● Active' : '● Blocked'}
+                          </Badge>
+                        </td>
+                        <td className="table-cell text-xs text-slate-400">{formatDate(user.createdAt)}</td>
+                        <td className="table-cell">
+                          <Button
+                            variant={user.status === 'active' ? 'danger' : 'success'}
+                            size="sm"
+                            loading={actionId === user.id}
+                            onClick={() => handleBlock(user)}
+                          >
+                            {user.status === 'active' ? <><UserX size={14} /> Block</> : <><UserCheck size={14} /> Unblock</>}
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>

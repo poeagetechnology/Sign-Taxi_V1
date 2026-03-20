@@ -9,26 +9,65 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 
-let locationInterval = null
+const locationIntervals = new Map()
 
-export const startLocationBroadcast = (driverId, onError) => {
+const persistDriverLocation = async (driverId, location, extra = {}) => {
+  await setDoc(doc(db, 'driver_locations', driverId), {
+    driverId,
+    lat: location.lat,
+    lng: location.lng,
+    address: location.address || null,
+    isOnline: extra.isOnline ?? true,
+    source: extra.source || 'gps',
+    updatedAt: serverTimestamp(),
+  }, { merge: true })
+}
+
+export const updateDriverLocation = async (driverId, location, extra = {}) => {
+  if (!driverId || typeof location?.lat !== 'number' || typeof location?.lng !== 'number') {
+    throw new Error('A valid driver location is required')
+  }
+
+  await persistDriverLocation(driverId, location, extra)
+}
+
+export const startLocationBroadcast = (driverId, onError, options = {}) => {
   if (!navigator.geolocation) {
     onError?.('Geolocation is not supported by your browser.')
     return
   }
 
-  const broadcast = () => {
+  if (locationIntervals.has(driverId)) {
+    clearInterval(locationIntervals.get(driverId))
+  }
+
+  const broadcast = async () => {
+    const overrideLocation = options.getOverrideLocation?.()
+
+    if (overrideLocation?.lat && overrideLocation?.lng) {
+      try {
+        await persistDriverLocation(driverId, overrideLocation, {
+          isOnline: true,
+          source: 'manual',
+        })
+        options.onLocationUpdate?.(overrideLocation)
+      } catch (err) {
+        console.error('Manual location broadcast error:', err)
+        onError?.(err.message)
+      }
+      return
+    }
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude: lat, longitude: lng } = position.coords
         try {
-          await setDoc(doc(db, 'driver_locations', driverId), {
-            driverId,
-            lat,
-            lng,
+          const nextLocation = { lat, lng }
+          await persistDriverLocation(driverId, nextLocation, {
             isOnline: true,
-            updatedAt: serverTimestamp(),
+            source: 'gps',
           })
+          options.onLocationUpdate?.(nextLocation)
         } catch (err) {
           console.error('Location broadcast error:', err)
         }
@@ -42,13 +81,14 @@ export const startLocationBroadcast = (driverId, onError) => {
   }
 
   broadcast()
-  locationInterval = setInterval(broadcast, 7000)
+  const intervalId = setInterval(broadcast, 7000)
+  locationIntervals.set(driverId, intervalId)
 }
 
 export const stopLocationBroadcast = async (driverId) => {
-  if (locationInterval) {
-    clearInterval(locationInterval)
-    locationInterval = null
+  if (locationIntervals.has(driverId)) {
+    clearInterval(locationIntervals.get(driverId))
+    locationIntervals.delete(driverId)
   }
   try {
     await setDoc(doc(db, 'driver_locations', driverId), {
@@ -106,5 +146,27 @@ export const reverseGeocode = async (lat, lng, apiKey) => {
     return `${lat.toFixed(5)}, ${lng.toFixed(5)}`
   } catch {
     return `${lat.toFixed(5)}, ${lng.toFixed(5)}`
+  }
+}
+
+export const geocodeAddress = async (address, apiKey) => {
+  try {
+    const res = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`
+    )
+    const data = await res.json()
+    const match = data.results?.[0]
+
+    if (!match?.geometry?.location) {
+      return null
+    }
+
+    return {
+      lat: match.geometry.location.lat,
+      lng: match.geometry.location.lng,
+      address: match.formatted_address,
+    }
+  } catch {
+    return null
   }
 }

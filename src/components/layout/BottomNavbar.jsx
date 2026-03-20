@@ -5,6 +5,7 @@ import {
   Users,
   Car,
   ClipboardList,
+  History,
   MapPin,
   User,
   ListChecks,
@@ -17,6 +18,7 @@ const adminLinks = [
   { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/drivers', label: 'Drivers', icon: Car },
   { to: '/admin/rides', label: 'Rides', icon: ClipboardList },
+  { to: '/admin/history', label: 'Hist', icon: History },
 ]
 
 const userLinks = [

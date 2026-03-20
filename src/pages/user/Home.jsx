@@ -2,12 +2,8 @@ import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Car, Clock, MapPin, ArrowRight, Zap } from 'lucide-react'
 import AppLayout from '../../components/layout/AppLayout'
-import MapView from '../../components/maps/MapView'
-import DriverMarker from '../../components/maps/DriverMarker'
-import UserMarker from '../../components/maps/UserMarker'
 import Button from '../../components/common/Button'
 import { RideStatusBadge } from '../../components/common/Badge'
-import { useCurrentLocation } from '../../hooks/useLocation'
 import { useOnlineDrivers } from '../../hooks/useDrivers'
 import { useUserActiveRide } from '../../hooks/useRides'
 import useAuthStore from '../../store/authStore'
@@ -16,7 +12,6 @@ import { formatCurrency } from '../../utils/formatters'
 const UserHome = () => {
   const navigate = useNavigate()
   const { userData } = useAuthStore()
-  const { location } = useCurrentLocation()
   const onlineDrivers = useOnlineDrivers()
   const activeRide = useUserActiveRide(userData?.id)
 
@@ -51,22 +46,6 @@ const UserHome = () => {
             </Button>
           </div>
         )}
-
-        {/* Map */}
-        <div className="h-80 md:h-96 rounded-2xl overflow-hidden shadow-card">
-          <MapView center={location} className="h-full">
-            {location && <UserMarker position={location} />}
-            {onlineDrivers.map(driver => (
-              driver.lat && driver.lng && (
-                <DriverMarker
-                  key={driver.id}
-                  position={{ lat: driver.lat, lng: driver.lng }}
-                  driverName="Driver"
-                />
-              )
-            ))}
-          </MapView>
-        </div>
 
         {/* Quick actions */}
         {!activeRide && (

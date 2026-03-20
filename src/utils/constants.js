@@ -5,6 +5,7 @@ export const ROLES = {
 }
 
 export const RIDE_STATUS = {
+  SEARCHING: 'searching',
   REQUESTED: 'requested',
   ACCEPTED: 'accepted',
   STARTED: 'started',
@@ -13,6 +14,7 @@ export const RIDE_STATUS = {
 }
 
 export const RIDE_STATUS_LABELS = {
+  searching: 'Searching',
   requested: 'Requested',
   accepted: 'Accepted',
   started: 'In Progress',
@@ -21,6 +23,7 @@ export const RIDE_STATUS_LABELS = {
 }
 
 export const RIDE_STATUS_COLORS = {
+  searching: 'badge-info',
   requested: 'badge-warning',
   accepted: 'badge-info',
   started: 'badge-info',

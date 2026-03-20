@@ -1,15 +1,17 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ToggleLeft, ToggleRight, DollarSign, Car, Star, ArrowRight, AlertCircle } from 'lucide-react'
+import { Crosshair, DollarSign, Car, Star, ArrowRight, MapPin } from 'lucide-react'
 import toast from 'react-hot-toast'
 import AppLayout from '../../components/layout/AppLayout'
 import Spinner from '../../components/common/Spinner'
 import Button from '../../components/common/Button'
 import useAuthStore from '../../store/authStore'
 import useDriverStore from '../../store/driverStore'
-import { getDriverById, toggleDriverOnlineStatus } from '../../services/driverService'
+import { getDriverById, toggleDriverOnlineStatus, updateDriverProfile } from '../../services/driverService'
 import { getDriverRides } from '../../services/rideService'
-import { startLocationBroadcast, stopLocationBroadcast } from '../../services/locationService'
+import LocationPickerModal from '../../components/maps/LocationPickerModal'
+import { useCurrentLocation, useDriverLocationRealtime } from '../../hooks/useLocation'
+import { startLocationBroadcast, stopLocationBroadcast, updateDriverLocation } from '../../services/locationService'
 import { formatCurrency } from '../../utils/formatters'
 
 const StatCard = ({ icon: Icon, label, value, color }) => (
@@ -28,9 +30,14 @@ const DriverDashboard = () => {
   const navigate = useNavigate()
   const { userData } = useAuthStore()
   const { driverProfile, setDriverProfile, isOnline, setIsOnline } = useDriverStore()
+  const { location: currentLocation } = useCurrentLocation()
+  const { location: liveLocation } = useDriverLocationRealtime(userData?.id)
   const [loading, setLoading] = useState(true)
   const [toggling, setToggling] = useState(false)
   const [rides, setRides] = useState([])
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false)
+  const [savingLocation, setSavingLocation] = useState(false)
+  const manualLocationRef = useRef(null)
 
   useEffect(() => {
     if (!userData?.id) return
@@ -38,11 +45,19 @@ const DriverDashboard = () => {
       getDriverById(userData.id),
       getDriverRides(userData.id),
     ]).then(([driver, rideList]) => {
-      if (driver) { setDriverProfile(driver); setIsOnline(driver.isOnline) }
+      if (driver) {
+        manualLocationRef.current = driver.manualLocation || null
+        setDriverProfile(driver)
+        setIsOnline(driver.isOnline)
+      }
       setRides(rideList)
     }).catch(console.error)
     .finally(() => setLoading(false))
   }, [userData?.id])
+
+  useEffect(() => {
+    manualLocationRef.current = driverProfile?.manualLocation || null
+  }, [driverProfile?.manualLocation])
 
   const handleToggle = async () => {
     // Testing mode: allow online toggle even if approval pending
@@ -56,7 +71,9 @@ const DriverDashboard = () => {
       await toggleDriverOnlineStatus(userData.id, newStatus)
       setIsOnline(newStatus)
       if (newStatus) {
-        startLocationBroadcast(userData.id, (err) => toast.error(err))
+        startLocationBroadcast(userData.id, (err) => toast.error(err), {
+          getOverrideLocation: () => manualLocationRef.current,
+        })
         toast.success('You are now online! Waiting for ride requests.')
       } else {
         await stopLocationBroadcast(userData.id)
@@ -66,8 +83,63 @@ const DriverDashboard = () => {
     finally { setToggling(false) }
   }
 
+  const handleManualLocationSave = async ({ location, address }) => {
+    setSavingLocation(true)
+    try {
+      const manualLocation = {
+        lat: location.lat,
+        lng: location.lng,
+        address,
+      }
+
+      await updateDriverProfile(userData.id, { manualLocation })
+      const updatedProfile = {
+        ...(driverProfile || {}),
+        manualLocation,
+      }
+      manualLocationRef.current = manualLocation
+      setDriverProfile(updatedProfile)
+
+      if (isOnline) {
+        await updateDriverLocation(userData.id, manualLocation, {
+          isOnline: true,
+          source: 'manual',
+        })
+      }
+
+      toast.success('Manual driver location updated.')
+    } catch (error) {
+      toast.error(error.message || 'Failed to update driver location')
+    } finally {
+      setSavingLocation(false)
+    }
+  }
+
+  const handleClearOverride = async () => {
+    setSavingLocation(true)
+    try {
+      await updateDriverProfile(userData.id, { manualLocation: null })
+      manualLocationRef.current = null
+      setDriverProfile({ ...(driverProfile || {}), manualLocation: null })
+
+      if (isOnline) {
+        startLocationBroadcast(userData.id, (err) => toast.error(err), {
+          getOverrideLocation: () => manualLocationRef.current,
+        })
+      }
+
+      toast.success('GPS location restored.')
+    } catch (error) {
+      toast.error(error.message || 'Failed to clear manual location')
+    } finally {
+      setSavingLocation(false)
+    }
+  }
+
   const completedRides = rides.filter(r => r.status === 'completed')
   const totalEarnings = completedRides.reduce((s, r) => s + (r.fare || 0), 0)
+  const activeLocation = driverProfile?.manualLocation || liveLocation || currentLocation
+  const activeLocationLabel = driverProfile?.manualLocation?.address || (activeLocation ? `${activeLocation.lat.toFixed(5)}, ${activeLocation.lng.toFixed(5)}` : 'Location not available yet')
 
   if (loading) return (
     <AppLayout title="Dashboard">
@@ -125,6 +197,46 @@ const DriverDashboard = () => {
           </div>
         </div>
 
+        <div className="card space-y-4">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="font-display font-semibold text-slate-900">Driver Location Control</h2>
+              <p className="text-sm text-slate-500 mt-1">
+                Override GPS with a searched address, map pin, or exact coordinates when you need to test or correct your live position.
+              </p>
+            </div>
+            <div className={`rounded-full px-3 py-1.5 text-xs font-semibold ${driverProfile?.manualLocation ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+              {driverProfile?.manualLocation ? 'Manual override active' : 'Using GPS location'}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                <MapPin size={18} className="text-blue-500" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-900">Current broadcast location</p>
+                <p className="text-sm text-slate-600 mt-1 break-words">{activeLocationLabel}</p>
+                {activeLocation && (
+                  <p className="text-xs text-slate-400 mt-1">
+                    {activeLocation.lat.toFixed(6)}, {activeLocation.lng.toFixed(6)}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3 flex-wrap">
+            <Button onClick={() => setLocationPickerOpen(true)} loading={savingLocation}>
+              <MapPin size={16} /> Set custom location
+            </Button>
+            <Button variant="secondary" onClick={handleClearOverride} disabled={!driverProfile?.manualLocation} loading={savingLocation}>
+              <Crosshair size={16} /> Use GPS again
+            </Button>
+          </div>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <StatCard icon={DollarSign} label="Total Earnings" value={formatCurrency(totalEarnings)} color="bg-emerald-500" />
@@ -163,6 +275,17 @@ const DriverDashboard = () => {
           </button>
         </div>
       </div>
+
+      <LocationPickerModal
+        isOpen={locationPickerOpen}
+        onClose={() => setLocationPickerOpen(false)}
+        onConfirm={handleManualLocationSave}
+        title="Update driver location"
+        confirmLabel="Save driver location"
+        currentLocation={currentLocation}
+        initialLocation={driverProfile?.manualLocation || liveLocation || currentLocation}
+        initialAddress={driverProfile?.manualLocation?.address || ''}
+      />
     </AppLayout>
   )
 }

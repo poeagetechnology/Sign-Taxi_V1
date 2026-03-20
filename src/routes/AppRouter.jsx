@@ -14,6 +14,7 @@ const AdminDashboard = lazy(() => import('../pages/admin/Dashboard'))
 const AdminUsers = lazy(() => import('../pages/admin/Users'))
 const AdminDrivers = lazy(() => import('../pages/admin/Drivers'))
 const AdminRides = lazy(() => import('../pages/admin/Rides'))
+const AdminHistory = lazy(() => import('../pages/admin/History'))
 
 // User pages
 const UserHome = lazy(() => import('../pages/user/Home'))
@@ -80,6 +81,7 @@ const AppRouter = () => {
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/drivers" element={<AdminDrivers />} />
             <Route path="/admin/rides" element={<AdminRides />} />
+            <Route path="/admin/history" element={<AdminHistory />} />
           </Route>
 
           {/* User routes */}
