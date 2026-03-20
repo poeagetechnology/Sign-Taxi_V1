@@ -12,12 +12,21 @@ const UserHistory = () => {
   const { userData } = useAuthStore()
   const [rides, setRides] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (!userData?.id) return
+    if (!userData?.id) {
+      setLoading(false)
+      return
+    }
     getUserRides(userData.id)
-      .then(setRides)
-      .catch(console.error)
+      .then(data => {
+        setRides(data)
+        setError(null)
+      })
+      .catch(err => {
+        setError(err.message)
+      })
       .finally(() => setLoading(false))
   }, [userData?.id])
 
@@ -35,6 +44,11 @@ const UserHistory = () => {
 
         {loading ? (
           <div className="flex items-center justify-center h-48"><Spinner size="lg" /></div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+            <p className="text-red-700 font-medium text-sm">Error loading rides</p>
+            <p className="text-red-600 text-xs mt-1">{error}</p>
+          </div>
         ) : rides.length === 0 ? (
           <EmptyState icon={ClipboardList} title="No rides yet" description="Book your first ride to see your history here." />
         ) : (

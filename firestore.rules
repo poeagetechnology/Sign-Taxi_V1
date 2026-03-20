@@ -75,40 +75,35 @@ service cloud.firestore {
       // User can read/update their own rides
       allow read, update: if isSignedIn() && resource.data.userId == request.auth.uid;
 
+      // All users can read completed rides (to see driver ratings)
+      allow read: if isSignedIn() && resource.data.status == 'completed';
+
       // Driver can read rides:
       // 1. Where they are assigned (driverId matches)
-      // 2. Where ride is searching and driver is in dispatch queue
+      // 2. Where ride is searching/cancelled and driver is currentDriverId (in queue)
       allow read: if isDriver() && (
         resource.data.driverId == request.auth.uid ||
-        (resource.data.status == 'searching' && 
-         resource.data.dispatchQueue.exists() &&
-         resource.data.dispatchQueue.size() > 0)
+        (resource.data.currentDriverId == request.auth.uid &&
+         (resource.data.status == 'searching' || resource.data.status == 'cancelled'))
       );
 
       // Driver can update rides:
-      // 1. They are assigned to
-      // 2. For dispatch status updates
+      // 1. Where they are already assigned (driverId matches)
+      // 2. Where they are current driver accepting offer (from searching or cancelled status)
+      // 3. Where they are current driver rejecting offer (clearing currentDriverId)
       allow update: if isDriver() && (
         resource.data.driverId == request.auth.uid ||
-        resource.data.status in ['searching', 'requested']
+        (resource.data.currentDriverId == request.auth.uid &&
+         (resource.data.status == 'searching' || resource.data.status == 'cancelled') &&
+         (
+           // Accept: setting status to accepted and driverId
+           (request.resource.data.status == 'accepted' &&
+            request.resource.data.driverId == request.auth.uid) ||
+           // Reject: clearing currentDriverId
+           request.resource.data.currentDriverId == null
+         )
+        )
       );
-    }
-
-    // ─── Dispatch Requests ──────────────────────────────────────────────────
-    // Track individual dispatch attempts to drivers
-    match /dispatch_requests/{requestId} {
-      // Admin can read all
-      allow read: if isAdmin();
-
-      // Drivers can read their own requests
-      allow read: if isDriver() && resource.data.driverId == request.auth.uid;
-
-      // System (authenticated users) can create dispatch requests
-      allow create: if isSignedIn();
-
-      // Drivers can update their response (accept/reject)
-      allow update: if isDriver() && resource.data.driverId == request.auth.uid &&
-        request.resource.data.response in ['accepted', 'rejected'];
     }
 
     // ─── Driver Ratings ────────────────────────────────────────────────────

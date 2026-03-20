@@ -142,14 +142,14 @@ const BookRide = () => {
         }))
 
         // If driver accepted, navigate after a brief delay
-        if (update.status === 'assigned') {
+        if (update.status === 'accepted') {
           setTimeout(() => {
             navigate(`/user/track/${ride.id}`)
           }, 1000) // Give user time to see the "Driver accepted" message
         }
       })
 
-      // Also subscribe to real-time ride updates
+      // Also subscribe to real-time ride updates as backup
       const unsubscribe = subscribeToDispatchStatus(ride.id, (update) => {
         if (update.status === 'accepted') {
           setDispatchState(prev => ({
@@ -157,6 +157,12 @@ const BookRide = () => {
             status: 'accepted',
             error: null
           }))
+          // Additional backup navigation trigger
+          setTimeout(() => {
+            if (document.location.pathname.includes('/user/book')) {
+              navigate(`/user/track/${ride.id}`)
+            }
+          }, 1500)
         }
       })
 
@@ -167,7 +173,6 @@ const BookRide = () => {
         toast.error('Timeout: No drivers were available for this ride.')
       }, 60000)
     } catch (err) {
-      console.error('Booking error:', err)
       setDispatchState({ status: 'error', error: err.message })
       toast.error(err.message || 'Failed to book ride')
     } finally {

@@ -33,9 +33,13 @@ const Login = () => {
       setUser(user)
       setUserData(userData)
       toast.success(`Welcome back, ${userData.name}!`)
-      if (userData.role === 'admin') navigate('/admin/dashboard')
-      else if (userData.role === 'driver') navigate('/driver/dashboard')
-      else navigate('/user/home')
+      if (userData.role === 'admin') {
+        navigate('/admin/dashboard')
+      } else if (userData.role === 'driver') {
+        navigate('/driver/dashboard')
+      } else {
+        navigate('/user/home')
+      }
     } catch (err) {
       toast.error(err.message || 'Login failed')
     } finally {

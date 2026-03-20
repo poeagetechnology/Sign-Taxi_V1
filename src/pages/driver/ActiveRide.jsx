@@ -27,6 +27,8 @@ const DriverActiveRide = () => {
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
 
+
+
   useEffect(() => {
     if (!userData?.id) return
     const q = query(
@@ -53,46 +55,63 @@ const DriverActiveRide = () => {
       }
       setLoading(false)
     })
-    return () => unsub()
+    return () => {
+      unsub()
+    }
   }, [userData?.id])
 
   useEffect(() => {
     if (!userData?.id) return
     const unsub = subscribeToDriverLocation(userData.id, (loc) => {
-      if (loc.lat && loc.lng) setDriverLocation({ lat: loc.lat, lng: loc.lng })
+      if (loc && loc.lat && loc.lng) {
+        setDriverLocation({ lat: loc.lat, lng: loc.lng })
+      }
     })
-    return () => unsub()
+    return () => {
+      unsub()
+    }
   }, [userData?.id])
 
   const handleStart = async () => {
-    if (!ride) return
+    if (!ride) {
+      return
+    }
     setActionLoading(true)
     try {
       await updateRideStatus(ride.id, 'started')
       toast.success('Ride started!')
-    } catch { toast.error('Failed to start ride') }
+    } catch (err) {
+      toast.error('Failed to start ride')
+    }
     finally { setActionLoading(false) }
   }
 
   const handleComplete = async () => {
-    if (!ride) return
+    if (!ride) {
+      return
+    }
     if (!window.confirm('Mark this ride as completed?')) return
     setActionLoading(true)
     try {
       await updateRideStatus(ride.id, 'completed')
       toast.success(`Ride completed! You earned ${formatCurrency(ride.fare)}.`)
       navigate('/driver/dashboard')
-    } catch { toast.error('Failed to complete ride') }
+    } catch (err) {
+      toast.error('Failed to complete ride')
+    }
     finally { setActionLoading(false) }
   }
 
-  if (loading) return (
+  if (loading) {
+    return (
     <AppLayout title="Active Ride">
       <div className="flex items-center justify-center h-64"><Spinner size="lg" /></div>
     </AppLayout>
   )
+  }
 
-  if (!ride) return (
+  if (!ride) {
+    return (
     <AppLayout title="Active Ride">
       <div className="text-center py-20">
         <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -104,6 +123,7 @@ const DriverActiveRide = () => {
       </div>
     </AppLayout>
   )
+  }
 
   const pickupPos = { lat: ride.pickupLat, lng: ride.pickupLng }
   const dropPos = { lat: ride.dropLat, lng: ride.dropLng }

@@ -54,6 +54,14 @@
       "fields": [
         { "fieldPath": "isOnline", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "rides",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "currentDriverId", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

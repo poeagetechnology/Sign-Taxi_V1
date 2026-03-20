@@ -63,41 +63,19 @@ export const createDispatchQueue = async (rideId, nearbyDrivers) => {
 
 export const sendDispatchToDriver = async (rideId, driverId) => {
   /**
-   * Send ride request to a specific driver
-   * Updates both ride and driver documents
+   * SIMPLIFIED: Send ride request to specific driver
+   * Updates ride with currentDriverId
+   * Driver's subscribeToDriverRequests listener will pick it up
    */
   try {
-    // Update ride document with dispatch info
     await updateDoc(doc(db, 'rides', rideId), {
-      currentDriverId: driverId, // Top-level field for Firestore queries
-      dispatchLog: {
-        currentDriver: driverId,
-        sentAt: serverTimestamp(),
-        retries: 0,
-      },
+      currentDriverId: driverId,
+      status: 'searching',
       updatedAt: serverTimestamp(),
     })
-
-    // Create a dispatch request in a separate collection for tracking
-    const dispatchRef = collection(db, 'dispatch_requests')
-    const newRequest = {
-      rideId,
-      driverId,
-      status: 'sent',
-      sentAt: serverTimestamp(),
-      respondedAt: null,
-      response: null, // 'accepted' or 'rejected'
-    }
-
-    await updateDoc(doc(db, 'dispatch_requests', `${rideId}_${driverId}`), newRequest)
-      .catch(async () => {
-        // If doc doesn't exist, create it (handled by addDoc equivalent)
-        // For now, we'll just update the rides collection
-      })
-
     return { success: true, driverId }
   } catch (err) {
-    console.error('Error sending dispatch:', err)
+    console.error('Error sending dispatch to driver:', err)
     throw err
   }
 }
@@ -155,9 +133,16 @@ export const subscribeToDispatchStatus = (rideId, callback) => {
 
 export const subscribeToDriverRequests = (driverId, callback) => {
   /**
-   * Driver listens for incoming dispatch requests
-   * Filters requests where driver is next in queue
+   * SIMPLIFIED: Driver listens for incoming requests
+   * Query rides where:
+   * - status = 'searching' (ride is looking for drivers)
+   * - currentDriverId = driverId (driver is next in queue)
    */
+  if (!driverId) {
+    console.error('subscribeToDriverRequests: driverId is required')
+    return () => {}
+  }
+
   return onSnapshot(
     query(
       collection(db, 'rides'),
@@ -165,11 +150,15 @@ export const subscribeToDriverRequests = (driverId, callback) => {
       where('currentDriverId', '==', driverId)
     ),
     snapshot => {
-      const requests = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
+      const requests = snapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data(),
       }))
       callback(requests)
+    },
+    error => {
+      console.error('Error in driver requests listener:', error)
+      callback([])
     }
   )
 }

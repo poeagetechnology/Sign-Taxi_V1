@@ -1,4 +1,4 @@
-import { updateDoc, doc, serverTimestamp } from 'firebase/firestore'
+import { updateDoc, doc, serverTimestamp, onSnapshot } from 'firebase/firestore'
 import { db } from './firebase'
 import { sendDispatchToDriver, updateDispatchStatus } from './dispatchService'
 import { findNearbyDrivers, enrichDriversWithRating } from './matchingService'
@@ -18,6 +18,7 @@ export class DispatchManager {
     this.currentIndex = 0
     this.timeoutIds = []
     this.onStatusChange = null
+    this.unsubscribeRideListener = null
   }
 
   async startDispatching(onStatusChange) {
@@ -28,11 +29,46 @@ export class DispatchManager {
     this.onStatusChange = onStatusChange
 
     try {
+      // Listen for ride status changes (e.g., when driver accepts)
+      this._setupRideStatusListener()
+      
       await this._dispatchToNextDriver()
     } catch (err) {
       console.error('Error starting dispatch:', err)
       throw err
     }
+  }
+
+  _setupRideStatusListener() {
+    /**
+     * Listen for ride status changes in real-time
+     * If ride becomes 'accepted', stop the dispatch process
+     */
+    const rideRef = doc(db, 'rides', this.rideId)
+    
+    this.unsubscribeRideListener = onSnapshot(rideRef, (snapshot) => {
+      if (!snapshot.exists()) return
+      
+      const rideData = snapshot.data()
+      
+      // If ride was accepted by a driver, stop dispatching
+      if (rideData.status === 'accepted') {
+        this._clearAllTimeouts()
+      }
+      
+      // If ride was cancelled externally, stop dispatching
+      if (rideData.status === 'cancelled' && this.timeoutIds.length > 0) {
+        this._clearAllTimeouts()
+      }
+    })
+  }
+
+  _clearAllTimeouts() {
+    /**
+     * Clear all pending timeouts
+     */
+    this.timeoutIds.forEach(id => clearTimeout(id))
+    this.timeoutIds = []
   }
 
   async _dispatchToNextDriver() {
@@ -46,12 +82,10 @@ export class DispatchManager {
     }
 
     const currentDriver = this.dispatchQueue[this.currentIndex]
-    console.log(`[Dispatch] Sending to driver ${currentDriver.driverId} (${this.currentIndex + 1}/${this.dispatchQueue.length})`)
 
     try {
       // Send request to driver
       await sendDispatchToDriver(this.rideId, currentDriver.driverId)
-      console.log(`[Dispatch] ✅ Request sent to ${currentDriver.driverId}`)
 
       // Update ride status
       await updateDoc(doc(db, 'rides', this.rideId), {
@@ -60,7 +94,6 @@ export class DispatchManager {
         dispatchAttempt: this.currentIndex + 1,
         updatedAt: serverTimestamp(),
       })
-      console.log(`[Dispatch] ✅ Ride updated with currentDriverId=${currentDriver.driverId}`)
 
       this.onStatusChange?.({
         status: 'searching',
@@ -70,7 +103,6 @@ export class DispatchManager {
 
       // Set timeout for this driver
       const timeoutId = setTimeout(async () => {
-        console.log(`Dispatch timeout for driver ${currentDriver.driverId}`)
         await this._handleDispatchTimeout(currentDriver.driverId)
       }, DISPATCH_TIMEOUT_MS)
 
@@ -85,8 +117,6 @@ export class DispatchManager {
     /**
      * Handle timeout: move to next driver
      */
-    console.log(`Moving to next driver (timeout: ${driverId})`)
-
     // Update dispatch status
     await updateDispatchStatus(this.rideId, driverId, 'timeout')
 
@@ -128,21 +158,15 @@ export class DispatchManager {
     /**
      * Driver accepted: clear all timeouts
      */
-    this.timeoutIds.forEach(id => clearTimeout(id))
-    this.timeoutIds = []
-
-    console.log(`Ride ${this.rideId} accepted by driver ${driverId}`)
+    this._clearAllTimeouts()
   }
 
   rejectByDriver(driverId) {
     /**
      * Driver rejected: move to next automatically
      */
-    console.log(`Driver ${driverId} rejected ride`)
-
-    // Clear timeout for this driver
-    this.timeoutIds.forEach(id => clearTimeout(id))
-    this.timeoutIds = []
+    // Clear all timeouts for rejection flow
+    this._clearAllTimeouts()
 
     this.currentIndex++
     this._dispatchToNextDriver()
@@ -152,8 +176,14 @@ export class DispatchManager {
     /**
      * Cancel dispatch process and clear timeouts
      */
-    this.timeoutIds.forEach(id => clearTimeout(id))
-    this.timeoutIds = []
+    this._clearAllTimeouts()
+    
+    // Unsubscribe from ride status listener
+    if (this.unsubscribeRideListener) {
+      this.unsubscribeRideListener()
+      this.unsubscribeRideListener = null
+    }
+    
     this.onStatusChange = null
   }
 }
@@ -172,8 +202,6 @@ export const initializeDispatch = async (
    * 4. Start dispatcher
    */
   try {
-    console.log('Initializing dispatch for ride:', rideId)
-
     // Find nearby drivers
     const nearbyDrivers = await findNearbyDrivers(pickupLat, pickupLng, radiusKm)
 

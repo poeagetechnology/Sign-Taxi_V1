@@ -24,22 +24,34 @@ const TrackRide = () => {
   const [loading, setLoading] = useState(true)
   const [cancelling, setCancelling] = useState(false)
 
+
+
   useEffect(() => {
-    if (!rideId) return
+    if (!rideId) {
+      return
+    }
     const unsub = subscribeToRide(rideId, (rideData) => {
       setRide(rideData)
       setLoading(false)
     })
-    return () => unsub()
+    return () => {
+      unsub()
+    }
   }, [rideId])
 
   useEffect(() => {
-    if (!ride?.driverId) return
+    if (!ride?.driverId) {
+      return
+    }
     const unsub = subscribeToDriverLocation(ride.driverId, (loc) => {
       if (loc.lat && loc.lng) setDriverLocation({ lat: loc.lat, lng: loc.lng })
     })
-    getUserById(ride.driverId).then(u => setDriverInfo(u)).catch(() => {})
-    return () => unsub()
+    getUserById(ride.driverId)
+      .then(u => setDriverInfo(u))
+      .catch(() => {})
+    return () => {
+      unsub()
+    }
   }, [ride?.driverId])
 
   const handleCancel = async () => {

@@ -3,6 +3,7 @@ import { Users, Car, ClipboardList, DollarSign, TrendingUp, Clock } from 'lucide
 import toast from 'react-hot-toast'
 import AppLayout from '../../components/layout/AppLayout'
 import Spinner from '../../components/common/Spinner'
+import useAuthStore from '../../store/authStore'
 import { getAllUsers } from '../../services/userService'
 import { getAllDrivers } from '../../services/driverService'
 import { getAllRides } from '../../services/rideService'
@@ -23,9 +24,13 @@ const StatCard = ({ icon: Icon, label, value, color, sub }) => (
 )
 
 const AdminDashboard = () => {
+  const { userData } = useAuthStore()
   const [stats, setStats] = useState({ users: 0, drivers: 0, rides: 0, earnings: 0 })
   const [recentRides, setRecentRides] = useState([])
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+  }, [userData?.role, userData])
 
   useEffect(() => {
     const load = async () => {

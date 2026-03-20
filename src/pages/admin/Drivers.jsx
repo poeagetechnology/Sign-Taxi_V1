@@ -76,6 +76,18 @@ const AdminDrivers = () => {
           </div>
         </div>
 
+        {/* Pending approvals summary */}
+        {drivers.filter(d => !d.isApproved).length > 0 && (
+          <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-amber-900">
+                ⏳ {drivers.filter(d => !d.isApproved).length} driver{drivers.filter(d => !d.isApproved).length !== 1 ? 's' : ''} pending approval
+              </p>
+              <p className="text-sm text-amber-700 mt-1">Review and approve drivers below to allow them to accept rides</p>
+            </div>
+          </div>
+        )}
+
         <div className="card p-0 overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center h-48"><Spinner /></div>

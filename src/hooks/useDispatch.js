@@ -145,24 +145,41 @@ export const useDriverDispatchRequests = (driverId) => {
 
   const respondToRequest = useCallback(
     async (rideId, response) => {
-      // response: 'accept' or 'reject'
+      if (!rideId) throw new Error('rideId is required')
+      if (!driverId) throw new Error('driverId is required')
       setIsResponding(true)
 
       try {
+        const { updateDoc, doc, serverTimestamp } = await import('firebase/firestore')
+        const { db } = await import('../services/firebase')
+        
         if (response === 'accept') {
-          // Update ride to accepted
-          await updateBookingStatus(rideId, 'accepted', {
-            driverId,
-            acceptedAt: new Date(),
-          })
+          const updateData = {
+            driverId: driverId,
+            status: 'accepted',
+            acceptedAt: serverTimestamp(),
+            currentDriverId: null,
+            updatedAt: serverTimestamp(),
+          }
+          
+          await updateDoc(doc(db, 'rides', rideId), updateData)
           setIncomingRequest(null)
+          return { success: true, action: 'accepted' }
+        } else if (response === 'reject') {
+          const updateData = {
+            currentDriverId: null,
+            updatedAt: serverTimestamp(),
+          }
+          
+          await updateDoc(doc(db, 'rides', rideId), updateData)
+          setIncomingRequest(null)
+          return { success: true, action: 'rejected' }
         } else {
-          // Reject: dispatcher will auto-move to next driver
-          await updateDispatchStatus(rideId, driverId, 'rejected')
-          setIncomingRequest(null)
+          throw new Error(`Invalid response type: ${response}`)
         }
       } catch (err) {
-        console.error('Error responding to request:', err)
+        console.error('Error responding to dispatch request:', err)
+        throw err
       } finally {
         setIsResponding(false)
       }

@@ -17,7 +17,8 @@ const useAuthStore = create((set, get) => ({
         try {
           const userData = await getCurrentUserData(firebaseUser.uid)
           set({ user: firebaseUser, userData, loading: false, initialized: true })
-        } catch {
+        } catch (err) {
+          console.error('Error loading user data:', err)
           set({ user: null, userData: null, loading: false, initialized: true })
         }
       } else {
