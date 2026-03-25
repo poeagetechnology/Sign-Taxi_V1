@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Zap, Mail, Lock, User, Phone } from 'lucide-react'
+import { Eye, EyeOff, Zap, Mail, Lock, User, Phone, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { registerUser } from '../../services/authService'
 import { createDriverProfile } from '../../services/driverService'
@@ -79,6 +79,15 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-slate-50 flex items-center justify-center p-4 py-10">
+      {/* Back button */}
+      <button
+        onClick={() => navigate('/')}
+        className="absolute top-4 left-4 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition"
+      >
+        <ArrowLeft size={20} />
+        <span className="text-sm font-medium">Back</span>
+      </button>
+
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-amber-500 rounded-2xl shadow-lg mb-4">

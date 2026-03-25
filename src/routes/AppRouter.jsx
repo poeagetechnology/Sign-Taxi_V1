@@ -5,6 +5,9 @@ import ProtectedRoute from './ProtectedRoute'
 import RoleRoute from './RoleRoute'
 import Spinner from '../components/common/Spinner'
 
+// Landing page
+const LandingPage = lazy(() => import('../pages/LandingPage'))
+
 // Auth pages
 const Login = lazy(() => import('../pages/auth/Login'))
 const Register = lazy(() => import('../pages/auth/Register'))
@@ -67,8 +70,17 @@ const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Root redirect */}
-        <Route path="/" element={<Navigate to={defaultRedirect()} replace />} />
+        {/* Root route - show landing page to public, redirect authenticated users */}
+        <Route 
+          path="/" 
+          element={
+            userData ? (
+              <Navigate to={defaultRedirect()} replace />
+            ) : (
+              <LandingPage />
+            )
+          } 
+        />
 
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
