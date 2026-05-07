@@ -106,24 +106,31 @@ const Register = () => {
       {/* Back button */}
       <button
         onClick={() => navigate('/')}
-        className="absolute top-6 left-6 flex items-center gap-2 text-slate-600 hover:bg-slate-100 px-4 py-2 rounded-full transition backdrop-blur-sm"
+        aria-label="Back to home"
+        className="absolute z-20 top-3 left-3 sm:top-6 sm:left-6 inline-flex items-center gap-2 text-slate-700 bg-white/85 hover:bg-white border border-slate-200 px-2.5 sm:px-3 py-2 rounded-xl transition backdrop-blur-sm shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
       >
-        <ArrowLeft size={20} />
-        <span className="text-sm font-medium">Back</span>
+        <ArrowLeft size={18} />
+        <span className="hidden sm:inline text-sm font-semibold">Back</span>
       </button>
 
       <div className="w-full max-w-md z-10">
         {/* Premium Logo Section */}
-        <div className="text-center mb-8">
-          <div>
-            <img src={logoImage} alt="Sign Taxi" />
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="flex items-center justify-center">
+            <img
+              src={logoImage}
+              alt="Sign Taxi"
+              className="w-auto h-14 sm:h-16 object-contain select-none"
+              loading="eager"
+              decoding="async"
+            />
           </div>
-          <h1 className="text-3xl font-black text-slate-900 mb-1">Join Sign Taxi</h1>
+          <h1 className="mt-3 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 mb-1">Join Sign Taxi</h1>
           <p className="text-slate-500 text-sm font-medium">Create your account to get started</p>
         </div>
 
         {/* Premium Card */}
-        <div className="bg-gradient-to-b from-white/98 to-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-8 md:p-10">
+        <div className="bg-gradient-to-b from-white/98 to-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-6 sm:p-8 md:p-10">
           {/* Premium Role Selector */}
           <div className="flex gap-2 mb-8 p-2 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200">
             {['user', 'driver', 'admin'].map(r => (
@@ -137,7 +144,7 @@ const Register = () => {
                     : 'text-slate-600 hover:text-slate-900 hover:bg-white hover:shadow-md'
                 }`}
               >
-                {r === 'user' ? '👤 Rider' : r === 'driver' ? '🚗 Driver' : '👑 Admin'}
+                {r === 'user' ? 'Rider' : r === 'driver' ? 'Driver' : 'Admin'}
               </button>
             ))}
           </div>

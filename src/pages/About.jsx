@@ -1,15 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { Clock, Shield, Smile, Users, Award, ChevronRight } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import PublicLayout from '../components/layout/PublicLayout';
 
-import logoImage from '../Logo/Sign Taxi.bf513dbcfde59f174016.png';
 import carImage from '../Logo/car1.51065db376274ec8c8ec.png';
-import taxiOutlineGraphic from '../Logo/red-taxi-outline-city-graphic.webp';
 
 const AboutUs = () => {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const navigate = useNavigate();
+  // (kept local state/hooks for timeline animations)
   
   const milestones = [
     { year: "2012", event: "Inception in Coimbatore", description: "Started our journey with a vision to revolutionize taxi services", icon: "🚀" },
@@ -25,52 +22,12 @@ const AboutUs = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white font-sans">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-white border-b z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={logoImage} alt="SignTaxi" className="h-10" />
-          </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <Link to="/" className="hover:text-[#ff914c] transition-colors">Home</Link>
-            <Link to="/about" className="text-[#ff914c] font-semibold">About Us</Link>
-            <Link to="/corporate" className="hover:text-[#ff914c] transition-colors">Corporate</Link>
-            <Link to="/cabs" className="hover:text-[#ff914c] transition-colors">Cabs</Link>
-            <a href="/book-trip" className="hover:text-[#ff914c] transition-colors">Book a Trip</a>
-            <a href="#" className="hover:text-[#ff914c] transition-colors">Become a Partner</a>
-          </div>
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate('/login')} className="hidden md:block bg-gradient-to-r from-[#ff5e1a] to-[#ff914c] text-white px-6 py-2.5 rounded-full font-semibold text-sm hover:shadow-lg transition-all">Sign In</button>
-            <button className="hidden md:block bg-[#ff914c] text-white px-6 py-2.5 rounded-full font-semibold hover:bg-[#ff7d28] transition-all">Download App</button>
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden text-3xl text-gray-800">
-              {mobileOpen ? '✕' : '☰'}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileOpen && (
-          <div className="md:hidden border-t bg-white">
-            <div className="px-6 py-4 space-y-3 flex flex-col">
-              <Link to="/" className="block py-2 hover:text-[#ff914c] transition-colors font-medium" onClick={() => setMobileOpen(false)}>Home</Link>
-              <Link to="/about" className="block py-2 text-[#ff914c] font-semibold" onClick={() => setMobileOpen(false)}>About Us</Link>
-              <Link to="/corporate" className="block py-2 hover:text-[#ff914c] transition-colors font-medium" onClick={() => setMobileOpen(false)}>Corporate</Link>
-              <Link to="/cabs" className="block py-2 hover:text-[#ff914c] transition-colors font-medium" onClick={() => setMobileOpen(false)}>Cabs</Link>
-              <a href="/book-trip" className="block py-2 hover:text-[#ff914c] transition-colors font-medium">Book a Trip</a>
-              <a href="#" className="block py-2 hover:text-[#ff914c] transition-colors font-medium">Become a Partner</a>
-              <button onClick={() => {navigate('/login'); setMobileOpen(false);}} className="w-full mt-4 bg-gradient-to-r from-[#ff5e1a] to-[#ff914c] text-white px-6 py-3 rounded-full font-semibold text-sm">Sign In</button>
-              <button className="w-full mt-2 bg-[#ff914c] hover:bg-[#ff7d28] text-white px-6 py-2.5 rounded-full font-semibold text-sm">
-                Download App
-              </button>
-            </div>
-          </div>
-        )}
-      </nav>
+    <PublicLayout>
+      <div className="min-h-screen bg-white font-sans">
 
       {/* Hero Header */}
-      <div className="bg-gradient-to-r from-[#ff914c] to-pink-600 pt-20 md:pt-24 pb-8 md:pb-12 text-white">
-        <div className="max-w-7xl mx-auto px-4 md:px-6">
+      <div className="bg-gradient-to-r from-amber-600 to-rose-600 pt-10 sm:pt-12 md:pt-16 pb-8 md:pb-12 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 md:gap-8">
             <div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black">About Us</h1>
@@ -87,10 +44,12 @@ const AboutUs = () => {
 
       {/* Trusted Service Section */}
       <section className="py-12 md:py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 md:px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
             <div>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 md:mb-6">Most Trusted <span className="text-[#ff914c]">Service</span> Provider</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 md:mb-6">
+                Most Trusted <span className="text-amber-700">Service</span> Provider
+              </h2>
               <p className="text-gray-600 leading-relaxed mb-4 md:mb-6 text-sm md:text-base">
                 SignTaxi has emerged as the most trusted taxi service provider in Tamilnadu 
                 covering all major cities, with more than 15,000+ cabs running successfully.
@@ -119,25 +78,27 @@ const AboutUs = () => {
       </section>
 
       {/* Professional Timeline Section */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="py-12 sm:py-16 lg:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-20"
+            className="text-center mb-10 sm:mb-14 lg:mb-20"
           >
-            <h2 className="text-5xl font-bold mb-4">Our Journey</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 text-slate-900">
+              Our Journey
+            </h2>
+            <p className="text-sm sm:text-base md:text-xl text-gray-600 max-w-2xl mx-auto">
               Tracing our path of growth and excellence across Tamil Nadu
             </p>
-            <div className="w-24 h-1 bg-[#ff914c] mx-auto mt-6 rounded-full"></div>
+            <div className="w-20 sm:w-24 h-1 bg-amber-600 mx-auto mt-5 sm:mt-6 rounded-full"></div>
           </motion.div>
 
           <div className="relative">
             {/* Vertical Line */}
-            <div className="absolute left-0 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-[#ff914c]/20 via-[#ff914c] to-[#ff914c]/20"></div>
+            <div className="absolute left-0 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-amber-600/20 via-amber-600 to-amber-600/20"></div>
 
             {/* Milestones */}
             <div className="space-y-20">
@@ -148,26 +109,8 @@ const AboutUs = () => {
           </div>
         </div>
       </section>
-
-      {/* ==================== FOOTER GRAPHIC ==================== */}
-      <div className="bg-gradient-to-r from-slate-50 to-slate-100 py-8 md:py-12 flex justify-center">
-        <img src={taxiOutlineGraphic} alt="SignTaxi" className="h-32 md:h-40 lg:h-48 object-contain" />
       </div>
-
-      {/* Footer */}
-      <footer className="bg-white text-gray-700 py-12 md:py-16 border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 text-center">
-          <div className="flex justify-center items-center gap-3 mb-8">
-            <img src={logoImage} alt="SignTaxi" className="h-9" />
-            <span className="text-2xl font-bold text-gray-900">SignTaxi</span>
-          </div>
-          <p className="text-sm">Experience the cleanest, most comfortable, and well-maintained cabs in Tamil Nadu.</p>
-          <div className="mt-12 text-xs border-t border-slate-200 pt-8">
-            © 2026 SignTaxi • All rights reserved
-          </div>
-        </div>
-      </footer>
-    </div>
+    </PublicLayout>
   );
 };
 
