@@ -35,7 +35,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 
 // Import images (using placeholder paths - replace with actual imports)
-import logoImage from '../Logo/Sign Taxi.bf513dbcfde59f174016.png';
+import LogoWithTM from '../components/common/LogoWithTM';
 import tamilNaduMap from '../Logo/Maps.6699bd4da22c4d42a29d.png';
 import phoneMockupHero from '../Logo/WhatsApp Image 2026-04-10 at 3.02.23 PM.jpeg';
 import phoneMockupFooter from '../Logo/WhatsApp Image 2026-04-10 at 3.02.23 PM.jpeg';
@@ -185,6 +185,8 @@ const SignTaxiLandingPage = () => {
     { value: "24/7", label: "Customer Support", icon: Headphones },
   ];
 
+  const SUPPORT_PHONE = '+918300399599';
+
   // Features
   const features = [
     { title: "No Cancellations", desc: "We never cancel last minute", icon: Shield },
@@ -203,7 +205,7 @@ const SignTaxiLandingPage = () => {
             animate={{ opacity: 1, x: 0 }}
             className="flex items-center gap-3"
           >
-            <img src={logoImage} alt="SignTaxi" className="h-10 md:h-12" />
+            <LogoWithTM imgClassName="h-10 md:h-12" />
           </motion.div>
 
           <div className="hidden lg:flex items-center gap-10">
@@ -1000,7 +1002,7 @@ const SignTaxiLandingPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-12">
             <div>
               <div className="flex items-center gap-3 mb-4 md:mb-6">
-                <img src={logoImage} alt="SignTaxi" className="h-8 md:h-10" />
+                <LogoWithTM imgClassName="h-8 md:h-10" />
               </div>
               <p className="text-xs md:text-sm leading-relaxed">Experience the cleanest, most comfortable, and well-maintained cabs in the city. Your trusted partner for safe and reliable transportation.</p>
               <div className="flex gap-3 md:gap-4 mt-4 md:mt-6">
@@ -1053,6 +1055,26 @@ const SignTaxiLandingPage = () => {
           </div>
         </div>
       </footer>
+
+      {/* Direct phone call — left side (WhatsApp FAB is bottom-right globally) */}
+      <motion.a
+        href={`tel:${SUPPORT_PHONE}`}
+        aria-label="Call SignTaxi"
+        title="Call us now"
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.3 }}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.95 }}
+        className="fixed bottom-6 left-4 sm:left-6 z-40 flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-[#ff5e1a] to-[#ff914c] text-white pl-4 pr-5 py-3.5 sm:py-4 rounded-full shadow-lg hover:shadow-2xl transition-shadow"
+      >
+        <span className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-white/20">
+          <PhoneCall size={22} className="sm:w-6 sm:h-6" strokeWidth={2.25} />
+        </span>
+        <span className="hidden min-[400px]:inline text-sm font-bold whitespace-nowrap pr-0.5">
+          Call Now
+        </span>
+      </motion.a>
     </div>
   );
 };

@@ -7,7 +7,7 @@ import { createDriverProfile } from '../../services/driverService'
 import useAuthStore from '../../store/authStore'
 import Button from '../../components/common/Button'
 import Input from '../../components/common/Input'
-import logoImage from '../../Logo/Sign Taxi.bf513dbcfde59f174016.png'
+import LogoWithTM from '../../components/common/LogoWithTM'
 
 const Register = () => {
   const navigate = useNavigate()
@@ -117,12 +117,10 @@ const Register = () => {
         {/* Premium Logo Section */}
         <div className="text-center mb-6 sm:mb-8">
           <div className="flex items-center justify-center">
-            <img
-              src={logoImage}
+            <LogoWithTM
               alt="Sign Taxi"
-              className="w-auto h-14 sm:h-16 object-contain select-none"
-              loading="eager"
-              decoding="async"
+              align="center"
+              imgClassName="w-auto h-14 sm:h-16 object-contain select-none"
             />
           </div>
           <h1 className="mt-3 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 mb-1">Join Sign Taxi</h1>
