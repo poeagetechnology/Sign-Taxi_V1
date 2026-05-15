@@ -7,9 +7,9 @@ const sizes = {
   xl: 'w-14 h-14 border-4',
 }
 
-const Spinner = ({ size = 'md', color = 'amber', className = '' }) => {
+const Spinner = ({ size = 'md', color = 'brand', className = '' }) => {
   const sizeClass = sizes[size] || sizes.md
-  const colorClass = color === 'white' ? 'border-white border-t-transparent' : 'border-amber-200 border-t-amber-500'
+  const colorClass = color === 'white' ? 'border-white border-t-transparent' : 'border-amber-200 border-t-amber-600'
 
   return (
     <div

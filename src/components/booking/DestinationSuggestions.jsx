@@ -28,7 +28,7 @@ const DestinationSuggestions = ({ onSelectPlace, isOpen, maxItems = 5 }) => {
             <button
               key={place.id || index}
               onClick={() => onSelectPlace(place)}
-              className="w-full text-left p-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 hover:border-amber-400 hover:shadow-md transition-all group"
+              className="w-full text-left p-3 rounded-xl bg-gradient-to-r from-amber-50 to-amber-100/60 border border-amber-200 hover:border-amber-400 hover:shadow-md transition-all group"
             >
               <div className="flex items-center gap-3">
                 <span className="text-lg flex-shrink-0">📍</span>

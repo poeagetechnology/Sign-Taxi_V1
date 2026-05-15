@@ -16,12 +16,12 @@ const Cities = () => {
       {/* Cities Section */}
       <div className="py-10 sm:py-14 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="bg-gradient-to-br from-amber-500 to-orange-500 text-white rounded-3xl overflow-hidden relative">
+          <div className="bg-gradient-to-br from-amber-700 to-amber-500 text-white rounded-3xl overflow-hidden relative">
             <div className="p-6 sm:p-10 lg:p-16">
               <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
                 {/* Left - Cities List */}
                 <div className="lg:col-span-7">
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-6 sm:mb-10">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-6 sm:mb-10">
                     Cities
                   </h1>
                   

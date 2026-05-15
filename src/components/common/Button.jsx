@@ -32,7 +32,7 @@ const Button = ({
       className={`${variants[variant]} ${sizeClass} ${widthClass} inline-flex items-center gap-2 ${className}`}
       {...props}
     >
-      {loading && <Spinner size="sm" color={variant === 'secondary' ? 'amber' : 'white'} />}
+      {loading && <Spinner size="sm" color={variant === 'secondary' ? 'brand' : 'white'} />}
       {children}
     </button>
   )

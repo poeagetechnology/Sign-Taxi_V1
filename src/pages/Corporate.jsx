@@ -37,7 +37,7 @@ const Corporate = () => {
         <div className="absolute inset-0 flex items-center">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 text-white">
             <div className="max-w-2xl">
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-black leading-none mb-3 sm:mb-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight mb-3 sm:mb-6">
                 Corporate
               </h1>
               <p className="text-sm sm:text-lg md:text-xl text-white/90">
@@ -65,7 +65,7 @@ const Corporate = () => {
       {/* Corporate Customization */}
       <section className="py-12 sm:py-16 lg:py-20 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-amber-700 mb-4 sm:mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-amber-700 mb-4 sm:mb-6">
             Corporate Customization
           </h2>
           
@@ -113,10 +113,10 @@ const Corporate = () => {
 
       {/* Terms & Privacy */}
       <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 pb-10 sm:pb-16 px-4">
-        <button className="border border-gray-300 hover:border-[#ff914c] px-8 py-3 rounded-full font-medium transition">
+        <button className="border border-gray-300 hover:border-amber-500 px-8 py-3 rounded-full font-medium transition">
           Terms and Conditions
         </button>
-        <button className="border border-gray-300 hover:border-[#ff914c] px-8 py-3 rounded-full font-medium transition">
+        <button className="border border-gray-300 hover:border-amber-500 px-8 py-3 rounded-full font-medium transition">
           Privacy Policy
         </button>
       </div>
@@ -124,7 +124,7 @@ const Corporate = () => {
       {/* Brands Who Trust Us */}
       <section className="bg-slate-50 py-12 sm:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <h2 className="text-center text-2xl sm:text-4xl font-bold mb-8 sm:mb-12 text-slate-900">
+          <h2 className="text-center text-2xl sm:text-3xl font-extrabold mb-8 sm:mb-12 text-slate-900">
             Brands <span className="text-amber-700">who trust us</span>
           </h2>
 

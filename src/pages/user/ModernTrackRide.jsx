@@ -146,7 +146,7 @@ const ModernTrackRide = () => {
       title: 'Driver on the Way',
       message: 'Your driver is heading to pickup location',
       icon: '🚗',
-      color: 'from-amber-500 to-orange-500',
+      color: 'from-amber-500 to-amber-700',
       progress: 50,
     },
     started: {

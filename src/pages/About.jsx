@@ -30,7 +30,7 @@ const AboutUs = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 md:gap-8">
             <div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black">About Us</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold">About Us</h1>
               <p className="text-base md:text-lg lg:text-xl mt-2 md:mt-3">Tamil Nadu's Most Trusted Taxi Services</p>
             </div>
             <img 
@@ -67,7 +67,7 @@ const AboutUs = () => {
                 { number: "98%", label: "On-Time Rate", icon: <Award className="w-6 h-6 md:w-8 md:h-8" /> },
               ].map((stat, idx) => (
                 <div key={idx} className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-md text-center">
-                  <div className="text-[#ff914c] flex justify-center mb-2 md:mb-3">{stat.icon}</div>
+                  <div className="text-amber-600 flex justify-center mb-2 md:mb-3">{stat.icon}</div>
                   <div className="text-2xl md:text-3xl font-bold text-gray-800">{stat.number}</div>
                   <div className="text-xs md:text-sm text-gray-500">{stat.label}</div>
                 </div>
@@ -87,7 +87,7 @@ const AboutUs = () => {
             transition={{ duration: 0.6 }}
             className="text-center mb-10 sm:mb-14 lg:mb-20"
           >
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 text-slate-900">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-3 sm:mb-4 text-slate-900">
               Our Journey
             </h2>
             <p className="text-sm sm:text-base md:text-xl text-gray-600 max-w-2xl mx-auto">
@@ -151,11 +151,11 @@ const TimelineItem = ({ milestone, index }) => {
           whileHover={{ y: -5 }}
         >
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-[#ff914c] to-[#ff5e1a] rounded-2xl flex items-center justify-center text-3xl shadow-md group-hover:scale-110 transition-transform">
+            <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-amber-700 rounded-2xl flex items-center justify-center text-3xl shadow-md group-hover:scale-110 transition-transform">
               {milestone.icon}
             </div>
             <div>
-              <div className="text-sm font-semibold text-[#ff914c] uppercase tracking-wide">Milestone</div>
+              <div className="text-sm font-semibold text-amber-600 uppercase tracking-wide">Milestone</div>
               <div className="text-3xl font-bold text-gray-800">{milestone.year}</div>
             </div>
           </div>
@@ -165,7 +165,7 @@ const TimelineItem = ({ milestone, index }) => {
             initial={{ width: 0 }}
             whileInView={{ width: "100%" }}
             transition={{ delay: 0.3, duration: 0.8 }}
-            className="h-0.5 bg-gradient-to-r from-[#ff914c] to-transparent mt-4"
+            className="h-0.5 bg-gradient-to-r from-amber-500 to-transparent mt-4"
           />
         </motion.div>
       </div>
@@ -188,7 +188,7 @@ const TimelineItem = ({ milestone, index }) => {
           }}
           className="relative"
         >
-          <div className="w-5 h-5 bg-[#ff914c] rounded-full shadow-lg"></div>
+          <div className="w-5 h-5 bg-amber-500 rounded-full shadow-lg"></div>
           <motion.div
             animate={{ 
               scale: [1, 1.5, 1],
@@ -199,7 +199,7 @@ const TimelineItem = ({ milestone, index }) => {
               repeat: Infinity,
               repeatDelay: 1
             }}
-            className="absolute inset-0 w-5 h-5 bg-[#ff914c] rounded-full"
+            className="absolute inset-0 w-5 h-5 bg-amber-500 rounded-full"
           />
         </motion.div>
       </div>

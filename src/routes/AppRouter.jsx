@@ -6,7 +6,7 @@ import RoleRoute from './RoleRoute'
 import Spinner from '../components/common/Spinner'
 
 // Landing page
-const LandingPage = lazy(() => import('../pages/LandingPage'))
+const LandingPage = lazy(() => import('../pages/LandingPageModern'))
 
 // Info pages
 const About = lazy(() => import('../pages/About'))

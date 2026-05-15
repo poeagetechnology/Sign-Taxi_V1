@@ -15,7 +15,7 @@ const LogoWithTM = ({
 }) => (
   <div className={`inline-flex flex-col ${alignMap[align] || alignMap.end}`}>
     <span
-      className={`text-[8px] md:text-[9px] font-bold text-[#ff5e1a] leading-none mb-0.5 pr-0.5 ${tmClassName}`}
+      className={`text-[8px] md:text-[9px] font-bold text-amber-700 leading-none mb-0.5 pr-0.5 ${tmClassName}`}
       aria-hidden="true"
     >
       TM

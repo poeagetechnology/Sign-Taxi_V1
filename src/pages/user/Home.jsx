@@ -34,9 +34,9 @@ const UserHome = () => {
 
         {/* Active ride banner - Enhanced */}
         {activeRide && (
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl p-5 flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-gradient-to-r from-amber-50 to-amber-100/60 border-2 border-amber-200 rounded-2xl p-5 flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center gap-3 flex-1">
-              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-700 rounded-xl flex items-center justify-center shadow-md">
                 <Car size={20} className="text-white" />
               </div>
               <div className="flex-1">

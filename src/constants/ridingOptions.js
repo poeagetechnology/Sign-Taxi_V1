@@ -29,7 +29,7 @@ const TRIP_TYPE_INFO = {
     label: 'Airport Taxi',
     description: 'Punctual airport service',
     icon: '✈️',
-    color: 'from-orange-500 to-orange-600',
+    color: 'from-amber-500 to-amber-700',
   },
   outstation: {
     label: 'Outstation',

@@ -8,20 +8,20 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        display: ['Syne', 'sans-serif'],
+        display: ['Inter', 'sans-serif'],
       },
       colors: {
         amber: {
-          50: '#fffbeb',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#f59e0b',
-          600: '#d97706',
-          700: '#b45309',
-          800: '#92400e',
-          900: '#78350f',
+          50: '#fff1f7',
+          100: '#ffe4f1',
+          200: '#ffc9e2',
+          300: '#ffa0cd',
+          400: '#ff72b5',
+          500: '#f9479f',
+          600: '#e52b8a',
+          700: '#bf1e72',
+          800: '#9d1d61',
+          900: '#831d53',
         },
       },
       boxShadow: {

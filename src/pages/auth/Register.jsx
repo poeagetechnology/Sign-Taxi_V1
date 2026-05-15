@@ -1,12 +1,11 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft, Chrome } from 'lucide-react'
+import { ArrowLeft, Chrome, Eye, EyeOff, Lock, Mail, Phone, User } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { registerUser, registerWithGoogle } from '../../services/authService'
 import { createDriverProfile } from '../../services/driverService'
 import useAuthStore from '../../store/authStore'
 import Button from '../../components/common/Button'
-import Input from '../../components/common/Input'
 import LogoWithTM from '../../components/common/LogoWithTM'
 
 const Register = () => {
@@ -19,11 +18,17 @@ const Register = () => {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [errors, setErrors] = useState({})
   const [form, setForm] = useState({
-    name: '', email: '', phone: '', password: '', confirmPassword: '',
-    vehicleMake: '', vehicleModel: '', vehiclePlate: '',
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+    vehicleMake: '',
+    vehicleModel: '',
+    vehiclePlate: '',
   })
 
-  const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }))
+  const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
 
   const validate = () => {
     const errs = {}
@@ -33,11 +38,13 @@ const Register = () => {
     if (!form.phone) errs.phone = 'Phone is required'
     if (!form.password || form.password.length < 6) errs.password = 'Min 6 characters'
     if (form.password !== form.confirmPassword) errs.confirmPassword = 'Passwords do not match'
+
     if (role === 'driver') {
       if (!form.vehicleMake) errs.vehicleMake = 'Vehicle make is required'
       if (!form.vehicleModel) errs.vehicleModel = 'Vehicle model is required'
       if (!form.vehiclePlate) errs.vehiclePlate = 'License plate is required'
     }
+
     if (role === 'admin') {
       const expectedAdminCode = import.meta.env.VITE_ADMIN_CODE || 'secret-admin-code'
       if (!adminCode.trim()) errs.adminCode = 'Admin access code is required'
@@ -46,32 +53,46 @@ const Register = () => {
     return errs
   }
 
+  const redirectByRole = (selectedRole) => {
+    if (selectedRole === 'admin') navigate('/admin/dashboard')
+    else if (selectedRole === 'driver') navigate('/driver/dashboard')
+    else navigate('/user/home')
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     const errs = validate()
-    if (Object.keys(errs).length) { setErrors(errs); return }
+    if (Object.keys(errs).length) {
+      setErrors(errs)
+      return
+    }
+
     setLoading(true)
     try {
-      const { user, userData } = await registerUser({ email: form.email, password: form.password, name: form.name, role })
-      await fetch('/api/placeholder', { method: 'HEAD' }).catch(() => {})
-      // Update phone
+      const { user, userData } = await registerUser({
+        email: form.email,
+        password: form.password,
+        name: form.name,
+        role,
+      })
+
       const { updateUserProfile } = await import('../../services/userService')
       await updateUserProfile(user.uid, { phone: form.phone })
 
       if (role === 'driver') {
         await createDriverProfile(user.uid, {
-          name: form.name, phone: form.phone,
-          vehicleMake: form.vehicleMake, vehicleModel: form.vehicleModel, vehiclePlate: form.vehiclePlate,
+          name: form.name,
+          phone: form.phone,
+          vehicleMake: form.vehicleMake,
+          vehicleModel: form.vehicleModel,
+          vehiclePlate: form.vehiclePlate,
         })
       }
 
       setUser(user)
       setUserData({ ...userData, phone: form.phone })
       toast.success('Account created! Welcome to SignTaxi.')
-
-      if (role === 'admin') navigate('/admin/dashboard')
-      else if (role === 'driver') navigate('/driver/dashboard')
-      else navigate('/user/home')
+      redirectByRole(role)
     } catch (err) {
       toast.error(err.message || 'Registration failed')
     } finally {
@@ -86,10 +107,7 @@ const Register = () => {
       setUser(user)
       setUserData(userData)
       toast.success('Account created! Welcome to SignTaxi.')
-
-      if (role === 'admin') navigate('/admin/dashboard')
-      else if (role === 'driver') navigate('/driver/dashboard')
-      else navigate('/user/home')
+      redirectByRole(role)
     } catch (err) {
       toast.error(err.message || 'Google registration failed')
     } finally {
@@ -98,275 +116,191 @@ const Register = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-slate-50 flex items-center justify-center p-4 py-10 relative overflow-hidden">
-      {/* Premium background elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-amber-100 rounded-full opacity-10 blur-3xl"></div>
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-slate-200 rounded-full opacity-5 blur-3xl"></div>
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 py-10 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-[28rem] h-[28rem] bg-amber-300/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-[26rem] h-[26rem] bg-amber-600/10 rounded-full blur-3xl" />
 
-      {/* Back button */}
       <button
         onClick={() => navigate('/')}
         aria-label="Back to home"
-        className="absolute z-20 top-3 left-3 sm:top-6 sm:left-6 inline-flex items-center gap-2 text-slate-700 bg-white/85 hover:bg-white border border-slate-200 px-2.5 sm:px-3 py-2 rounded-xl transition backdrop-blur-sm shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+        className="absolute z-20 top-4 left-4 sm:top-6 sm:left-6 inline-flex items-center gap-2 text-slate-700 bg-white/85 hover:bg-white border border-slate-200 px-3 py-2 rounded-xl transition shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
       >
         <ArrowLeft size={18} />
         <span className="hidden sm:inline text-sm font-semibold">Back</span>
       </button>
 
-      <div className="w-full max-w-md z-10">
-        {/* Premium Logo Section */}
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="flex items-center justify-center">
-            <LogoWithTM
-              alt="Sign Taxi"
-              align="center"
-              imgClassName="w-auto h-14 sm:h-16 object-contain select-none"
-            />
-          </div>
-          <h1 className="mt-3 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 mb-1">Join Sign Taxi</h1>
-          <p className="text-slate-500 text-sm font-medium">Create your account to get started</p>
+      <div className="w-full max-w-lg z-10">
+        <div className="text-center mb-6">
+          <LogoWithTM alt="Sign Taxi" align="center" imgClassName="w-auto h-14 object-contain select-none" />
+          <h1 className="mt-4 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Create Your Account</h1>
+          <p className="text-slate-500 text-sm font-medium mt-1">Join as rider, driver, or admin</p>
         </div>
 
-        {/* Premium Card */}
-        <div className="bg-gradient-to-b from-white/98 to-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-6 sm:p-8 md:p-10">
-          {/* Premium Role Selector */}
-          <div className="flex gap-2 mb-8 p-2 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200">
-            {['user', 'driver', 'admin'].map(r => (
+        <div className="glass-card p-6 sm:p-8">
+          <div className="flex gap-2 mb-6 p-1.5 bg-slate-100 rounded-xl border border-slate-200">
+            {['user', 'driver', 'admin'].map((r) => (
               <button
                 key={r}
                 type="button"
                 onClick={() => setRole(r)}
-                className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all duration-300 capitalize transform ${
-                  role === r
-                    ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg scale-105'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white hover:shadow-md'
+                className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all capitalize ${
+                  role === r ? 'bg-amber-600 text-white shadow-md' : 'text-slate-600 hover:bg-white'
                 }`}
               >
-                {r === 'user' ? 'Rider' : r === 'driver' ? 'Driver' : 'Admin'}
+                {r === 'user' ? 'Rider' : r}
               </button>
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Full Name */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <User size={16} className="text-amber-600" />
-                Full Name
-              </label>
-              <input
-                type="text"
-                placeholder="John Doe"
-                value={form.name}
-                onChange={set('name')}
-                className={`w-full px-4 py-3 rounded-xl border-2 transition focus:outline-none font-medium ${
-                  errors.name
-                    ? 'border-red-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200'
-                    : 'border-slate-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-100'
-                }`}
-              />
-              {errors.name && <p className="text-xs text-red-500 font-medium">{errors.name}</p>}
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Field
+              icon={User}
+              label="Full Name"
+              placeholder="John Doe"
+              value={form.name}
+              onChange={set('name')}
+              error={errors.name}
+            />
+            <Field
+              icon={Mail}
+              label="Email"
+              type="email"
+              placeholder="you@example.com"
+              value={form.email}
+              onChange={set('email')}
+              error={errors.email}
+            />
+            <Field
+              icon={Phone}
+              label="Phone"
+              type="tel"
+              placeholder="+91"
+              value={form.phone}
+              onChange={set('phone')}
+              error={errors.phone}
+            />
 
-            {/* Email */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <Mail size={16} className="text-amber-600" />
-                Email Address
-              </label>
-              <input
-                type="email"
-                placeholder="you@example.com"
-                value={form.email}
-                onChange={set('email')}
-                className={`w-full px-4 py-3 rounded-xl border-2 transition focus:outline-none font-medium ${
-                  errors.email
-                    ? 'border-red-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200'
-                    : 'border-slate-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-100'
-                }`}
-              />
-              {errors.email && <p className="text-xs text-red-500 font-medium">{errors.email}</p>}
-            </div>
-
-            {/* Phone */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <Phone size={16} className="text-amber-600" />
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                placeholder="+1 555 000 0000"
-                value={form.phone}
-                onChange={set('phone')}
-                className={`w-full px-4 py-3 rounded-xl border-2 transition focus:outline-none font-medium ${
-                  errors.phone
-                    ? 'border-red-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200'
-                    : 'border-slate-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-100'
-                }`}
-              />
-              {errors.phone && <p className="text-xs text-red-500 font-medium">{errors.phone}</p>}
-            </div>
-
-            {/* Driver Vehicle Details */}
             {role === 'driver' && (
-              <div className="space-y-4 pt-4 border-t-2 border-slate-100">
-                <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Vehicle Information</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="Make (e.g., Toyota)"
+              <div className="space-y-3 pt-2 border-t border-slate-200">
+                <p className="text-xs uppercase tracking-wide font-semibold text-amber-700">Vehicle Information</p>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <SimpleField
+                    placeholder="Vehicle make"
                     value={form.vehicleMake}
                     onChange={set('vehicleMake')}
-                    className={`w-full px-3 py-2.5 rounded-lg border-2 text-sm transition focus:outline-none ${
-                      errors.vehicleMake
-                        ? 'border-red-300 focus:border-amber-500'
-                        : 'border-slate-200 focus:border-amber-500'
-                    }`}
+                    error={errors.vehicleMake}
                   />
-                  <input
-                    type="text"
-                    placeholder="Model"
+                  <SimpleField
+                    placeholder="Vehicle model"
                     value={form.vehicleModel}
                     onChange={set('vehicleModel')}
-                    className={`w-full px-3 py-2.5 rounded-lg border-2 text-sm transition focus:outline-none ${
-                      errors.vehicleModel
-                        ? 'border-red-300 focus:border-amber-500'
-                        : 'border-slate-200 focus:border-amber-500'
-                    }`}
+                    error={errors.vehicleModel}
                   />
                 </div>
-                <input
-                  type="text"
-                  placeholder="License Plate"
+                <SimpleField
+                  placeholder="License plate"
                   value={form.vehiclePlate}
                   onChange={set('vehiclePlate')}
-                  className={`w-full px-3 py-2.5 rounded-lg border-2 text-sm transition focus:outline-none ${
-                    errors.vehiclePlate
-                      ? 'border-red-300 focus:border-amber-500'
-                      : 'border-slate-200 focus:border-amber-500'
-                  }`}
+                  error={errors.vehiclePlate}
                 />
               </div>
             )}
 
-            {/* Admin Code */}
             {role === 'admin' && (
-              <div className="space-y-2 pt-4 border-t-2 border-slate-100">
-                <label className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                  <Lock size={16} className="text-amber-600" />
-                  Admin Access Code
-                </label>
-                <input
+              <div className="pt-2 border-t border-slate-200">
+                <Field
+                  icon={Lock}
+                  label="Admin Access Code"
                   type="password"
                   placeholder="Enter admin secret"
                   value={adminCode}
                   onChange={(e) => setAdminCode(e.target.value)}
-                  className={`w-full px-4 py-3 rounded-xl border-2 transition focus:outline-none font-medium ${
-                    errors.adminCode
-                      ? 'border-red-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200'
-                      : 'border-slate-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-100'
-                  }`}
+                  error={errors.adminCode}
                 />
-                {errors.adminCode && <p className="text-xs text-red-500 font-medium">{errors.adminCode}</p>}
               </div>
             )}
 
-            {/* Password */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <Lock size={16} className="text-amber-600" />
-                Password
+            <div>
+              <label className="text-sm font-medium text-slate-700 inline-flex items-center gap-2 mb-1.5">
+                <Lock size={14} className="text-amber-700" /> Password
               </label>
-              <div className="relative flex items-center">
+              <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Min 6 characters"
                   value={form.password}
                   onChange={set('password')}
-                  className={`w-full px-4 py-3 rounded-xl border-2 transition focus:outline-none font-medium ${
-                    errors.password
-                      ? 'border-red-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200'
-                      : 'border-slate-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-100'
-                  }`}
+                  className={`input-field pr-11 ${errors.password ? 'border-red-300 focus:ring-red-200 focus:border-red-300' : ''}`}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(v => !v)}
-                  className="absolute right-4 text-slate-500 hover:text-amber-600 transition"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-amber-700 transition"
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-red-500 font-medium">{errors.password}</p>}
+              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
             </div>
 
-            {/* Confirm Password */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                <Lock size={16} className="text-amber-600" />
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                placeholder="Repeat password"
-                value={form.confirmPassword}
-                onChange={set('confirmPassword')}
-                className={`w-full px-4 py-3 rounded-xl border-2 transition focus:outline-none font-medium ${
-                  errors.confirmPassword
-                    ? 'border-red-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200'
-                    : 'border-slate-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-100'
-                }`}
-              />
-              {errors.confirmPassword && <p className="text-xs text-red-500 font-medium">{errors.confirmPassword}</p>}
-            </div>
+            <SimpleField
+              placeholder="Confirm password"
+              type="password"
+              value={form.confirmPassword}
+              onChange={set('confirmPassword')}
+              error={errors.confirmPassword}
+            />
 
-            {/* Sign Up Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-red-500 via-red-600 to-orange-500 hover:from-red-600 hover:via-red-700 hover:to-orange-600 text-white font-bold rounded-xl py-3.5 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-70 mt-8 active:translate-y-0"
-            >
-              {loading ? 'Creating Account...' : 'Create Account'}
-            </button>
+            <Button type="submit" fullWidth loading={loading} size="lg">
+              {loading ? 'Creating account...' : 'Create Account'}
+            </Button>
 
-            {/* Google Sign Up Button */}
             <button
               type="button"
               onClick={handleGoogleSignUp}
               disabled={googleLoading}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border-2 border-slate-200 rounded-xl font-semibold text-slate-700 hover:bg-gradient-to-r hover:from-slate-50 hover:to-white hover:border-slate-300 hover:shadow-lg transition-all duration-300"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border border-slate-200 rounded-xl font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all"
             >
-              <Chrome size={20} className="text-red-500" />
-              {googleLoading ? 'Signing up...' : 'Sign up with Google'}
+              <Chrome size={18} className="text-amber-700" />
+              {googleLoading ? 'Signing up...' : 'Continue with Google'}
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-slate-500">Already registered?</span>
-            </div>
-          </div>
-
-          {/* Sign In Link */}
-          <p className="text-center text-sm text-slate-700">
-            <Link to="/login" className="text-amber-600 font-bold hover:text-amber-700 hover:underline transition">
-              Sign in to existing account
+          <p className="text-center text-sm text-slate-700 mt-6">
+            Already have an account?{' '}
+            <Link to="/login" className="text-amber-700 font-semibold hover:text-amber-800">
+              Sign in
             </Link>
           </p>
         </div>
-
-        {/* Trust Badge */}
-        <div className="mt-8 flex items-center justify-center gap-2 text-slate-600 text-xs font-medium">
-          <div className="w-1.5 h-1.5 bg-slate-600 rounded-full"></div>
-          <span>Secure Registration</span>
-          <div className="w-1.5 h-1.5 bg-slate-600 rounded-full"></div>
-        </div>
       </div>
+    </div>
+  )
+}
+
+function Field({ icon: Icon, label, error, ...props }) {
+  return (
+    <div>
+      <label className="text-sm font-medium text-slate-700 inline-flex items-center gap-2 mb-1.5">
+        <Icon size={14} className="text-amber-700" /> {label}
+      </label>
+      <input
+        {...props}
+        className={`input-field ${error ? 'border-red-300 focus:ring-red-200 focus:border-red-300' : ''}`}
+      />
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
+  )
+}
+
+function SimpleField({ error, ...props }) {
+  return (
+    <div>
+      <input
+        {...props}
+        className={`input-field ${error ? 'border-red-300 focus:ring-red-200 focus:border-red-300' : ''}`}
+      />
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
     </div>
   )
 }

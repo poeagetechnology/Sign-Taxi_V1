@@ -203,7 +203,7 @@ const NearbyPlaces = () => {
               <Button
                 fullWidth
                 onClick={() => handleBookRide(selectedPlace)}
-                className="bg-gradient-to-r from-amber-500 to-orange-500"
+                className="bg-gradient-to-r from-amber-500 to-amber-700"
               >
                 <Navigation size={16} /> Book Ride to {selectedPlace.name}
               </Button>

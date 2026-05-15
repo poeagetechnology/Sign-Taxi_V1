@@ -23,12 +23,12 @@ const BookATrip = () => {
       {/* Book a Trip Section */}
       <div className="py-10 sm:py-14 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="bg-gradient-to-br from-rose-600 to-orange-500 text-white rounded-3xl overflow-hidden relative">
+          <div className="bg-gradient-to-br from-amber-700 to-amber-500 text-white rounded-3xl overflow-hidden relative">
             <div className="p-6 sm:p-10 lg:p-16">
               <div className="grid lg:grid-cols-12 gap-6 sm:gap-10 items-center">
                 {/* Left - Trip Types List */}
                 <div className="lg:col-span-7">
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-6 sm:mb-10">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-6 sm:mb-10">
                     Book a Trip
                   </h1>
                   
@@ -89,7 +89,7 @@ const BookATrip = () => {
       {/* Trip Details Section */}
       <div className="py-12 md:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <h2 className="text-2xl md:text-4xl font-bold mb-8 md:mb-12 text-center">How It Works</h2>
+          <h2 className="text-2xl md:text-3xl font-extrabold mb-8 md:mb-12 text-center">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {[
               {
