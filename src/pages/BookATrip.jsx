@@ -6,6 +6,23 @@ import car1 from '../Logo/car1.51065db376274ec8c8ec.png';
 
 const BookATrip = () => {
   const [selectedTrip, setSelectedTrip] = useState(null);
+
+  const fleetOrder = [
+    'Waganor Mini',
+    'Sadon (Shift Dizire / Aura)',
+    'SUV (Innova Crista)',
+    'MUV (Ertiga)',
+    'Tempo Traveller',
+    'Urban',
+  ];
+
+  const quickRates = [
+    'One way minimum 120 km | Mini Rs. 14/km | Sadon Rs. 15/km | MUV Rs. 17/km | SUV Rs. 20/km',
+    'Round trip minimum 200 km | Mini Rs. 13/km | Sadon Rs. 14/km | SUV Rs. 19/km',
+    'Hourly 1 hour / 10 km | Mini Rs. 320 | Sadon Rs. 350 | MUV Rs. 400 | SUV Rs. 500',
+    'Below 30 km an extra Rs. 25 applies | Peak-hour and city traffic charges may increase fare',
+    'No cancellation on confirmed rides | Toll and statutory charges paid by customer',
+  ];
   
   const tripTypes = [
     { name: "Oneway Trip", icon: "→", desc: "Point A to Point B" },
@@ -28,9 +45,12 @@ const BookATrip = () => {
               <div className="grid lg:grid-cols-12 gap-6 sm:gap-10 items-center">
                 {/* Left - Trip Types List */}
                 <div className="lg:col-span-7">
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-6 sm:mb-10">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-3 sm:mb-4">
                     Book a Trip
                   </h1>
+                  <p className="inline-flex items-center gap-2 rounded-full bg-white/20 border border-white/30 px-3 py-1.5 text-xs sm:text-sm font-semibold text-white mb-6 sm:mb-10">
+                    ✓ No cancellation · Fixed pricing
+                  </p>
                   
                   <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-x-8 md:gap-y-6">
                     {tripTypes.map((trip, index) => (
@@ -124,6 +144,36 @@ const BookATrip = () => {
                 <p className="text-sm md:text-base text-gray-600">{step.desc}</p>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="py-12 md:py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid lg:grid-cols-2 gap-6">
+          <div className="glass-card p-6">
+            <h3 className="text-xl font-bold text-slate-900">Car Order</h3>
+            <p className="mt-1 text-sm text-slate-500">Swipe-friendly cards for fast comparison.</p>
+            <div className="mt-4 flex gap-3 overflow-x-auto pb-2 snap-x">
+              {fleetOrder.map((car, index) => (
+                <div key={car} className="snap-start min-w-[200px] rounded-2xl border border-slate-200 bg-white p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">#{index + 1}</p>
+                  <p className="mt-1 text-sm font-bold text-slate-800 leading-snug">{car}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="glass-card p-6">
+            <h3 className="text-xl font-bold text-slate-900">Rate Card Highlights</h3>
+            <p className="mt-1 text-sm text-slate-500">Tap-friendly bullets with compact pricing logic.</p>
+            <ul className="mt-4 space-y-2.5">
+              {quickRates.map((rate) => (
+                <li key={rate} className="text-sm text-slate-600 flex gap-2">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-amber-600 shrink-0" />
+                  <span>{rate}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, MessageSquare, Phone, ShieldCheck, Clock3 } from 'lucide-react'
+import { Mail, MessageSquare, Phone, ShieldCheck, Clock3, CircleCheck } from 'lucide-react'
 import LogoWithTM from '../common/LogoWithTM'
 
 export default function PublicFooter() {
@@ -11,9 +11,10 @@ export default function PublicFooter() {
           <div className="sm:col-span-2 lg:col-span-1">
             <LogoWithTM imgClassName="h-10 object-contain brightness-110" tmClassName="text-amber-400" />
             <p className="mt-4 text-sm text-slate-300 leading-relaxed">
-              Premium taxi booking with predictable fares, proactive support, and a safety-first ride experience.
+              Premium taxi booking with no cancellation, predictable fares, proactive support, and a safety-first ride experience.
             </p>
             <div className="mt-4 space-y-2 text-xs text-slate-400">
+              <p className="flex items-center gap-2"><CircleCheck size={14} className="text-amber-400" /> No cancellation</p>
               <p className="flex items-center gap-2"><ShieldCheck size={14} className="text-amber-400" /> Driver identity verified</p>
               <p className="flex items-center gap-2"><Clock3 size={14} className="text-amber-400" /> 24x7 operational support</p>
             </div>

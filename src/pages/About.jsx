@@ -56,7 +56,7 @@ const AboutUs = () => {
               </p>
               <p className="text-gray-600 leading-relaxed text-sm md:text-base">
                 We take pride in serving millions of satisfied customers with our commitment 
-                to safety, punctuality, and comfort.
+                to safety, punctuality, comfort, and no cancellation on confirmed rides.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4 md:gap-6">
